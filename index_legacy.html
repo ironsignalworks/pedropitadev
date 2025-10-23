@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pedro Pita — Web Developer</title>
+  <meta name="description" content="Lisbon-based web developer shipping performant, accessible web products and durable publishing pipelines." />
+  <link rel="canonical" href="https://pedropita.dev/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://pedropita.dev/" />
+  <meta property="og:title" content="Pedro Pita — Web Developer" />
+  <meta property="og:description" content="Clean, fast, client-ready. UI, APIs, and content systems that last." />
+  <meta property="og:site_name" content="Pedro Pita" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta property="og:image" content="https://pedropita.dev/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://pedropita.dev/og-image.jpg" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== Tailwind-esque design system (subtle, neutral, readable) ===== */
+    :root{
+      /* Dark */
+      --bg-0:#0b0f14;           /* canvas */
+      --bg-1:#0e141b;           /* surface */
+      --ink:#e5e7eb;            /* slate-200 */
+      --muted:#9ca3af;          /* slate-400 */
+      --chip:#cbd5e1;           /* slate-300 */
+      --accent:#6366f1;         /* indigo-500 */
+      --accent-weak:#a5b4fc;    /* indigo-300 */
+      --link:var(--accent);
+      --line:rgba(148,163,184,.18);         /* slate-400 @ 18% */
+      --line-strong:rgba(148,163,184,.32);
+      --wash:rgba(99,102,241,.07);          /* subtle indigo wash */
+      --hover-bg:rgba(148,163,184,.08);     /* neutral hover */
+      --ring:0 0 0 1px rgba(99,102,241,.35);/* subtle ring */
+
+      /* Layout */
+      --max:1200px;
+      --pad:clamp(12px,1.8vw,18px);
+      --gap:10px;
+      --radius:10px;
+      --border:1px solid var(--line);
+      --divide:1px solid var(--line);
+    }
+    html.theme-light{
+      --bg-0:#f8fafc; --bg-1:#ffffff;
+      --ink:#0f172a; --muted:#475569; --chip:#334155;
+      --accent:#4f46e5; --accent-weak:#818cf8;
+      --link:var(--accent);
+      --line:rgba(15,23,42,.14);
+      --line-strong:rgba(15,23,42,.28);
+      --wash:rgba(79,70,229,.06);
+      --hover-bg:rgba(15,23,42,.06);
+      --ring:0 0 0 1px rgba(79,70,229,.35);
+    }
+
+    /* ===== Base ===== */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; background:var(--bg-0); color:var(--muted);
+      font:15.5px/1.7 "Inter", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    a{color:var(--link); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* Headings */
+    h1,h2,h3{
+      color:var(--ink); margin:0 0 .3em; line-height:1.18;
+      font-family:"Inter Tight","Inter",system-ui,-apple-system, Segoe UI, Arial, sans-serif;
+      letter-spacing:.01em;
+    }
+    h1{font-size:clamp(26px,3.2vw,38px); font-weight:700}
+    h2{font-size:clamp(18px,2.1vw,23px); font-weight:700}
+    h3{font-size:clamp(16px,1.5vw,19px); font-weight:600}
+    p{margin:.3em 0 .7em}
+    code,.mono{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono","Courier New", monospace}
+
+    .wrap{max-width:var(--max); margin:0 auto; padding:0 var(--pad)}
+    .shell{display:grid; gap:0; grid-template-columns:minmax(240px,360px) 1fr; min-height:100dvh;}
+
+    /* ===== Sidebar — clean, no gradients, fits viewport ===== */
+    .aside{
+      position:sticky; top:0; align-self:start; height:100dvh;
+      border-right:var(--divide);
+      padding:calc(var(--pad)*.7) var(--pad);
+      display:grid; grid-template-rows:auto auto 1fr auto auto;
+      row-gap:10px;
+      background:var(--bg-1);
+      overflow:auto;
+    }
+    .brand{display:grid; row-gap:4px}
+    .name{font-size:clamp(18px,1.9vw,22px); font-weight:700; color:var(--ink)}
+    .role{color:var(--muted); font-weight:600}
+    .blurb{color:var(--muted)}
+    .value-props{ margin:.15rem 0 0; padding-left:1rem; }
+    .value-props li{ margin:.12rem 0; color:var(--muted); }
+    .value-props strong{ color:var(--ink); font-weight:600; }
+
+    .nav{display:flex; flex-direction:column; gap:2px; margin-top:2px}
+    .nav a{
+      display:flex; align-items:center; gap:8px; padding:.36rem .48rem; border-radius:8px; color:var(--muted);
+      text-decoration:none; transition:box-shadow .12s ease, background .12s ease, color .12s ease
+    }
+    .nav a:hover{background:var(--hover-bg); color:var(--ink)}
+    .nav a.active{background:transparent; color:var(--ink); box-shadow:var(--ring)}
+    .nav a{position:relative}
+    .nav a.active::before{content:"";position:absolute;left:-7px;width:3px;top:12%;bottom:12%;background:var(--accent);border-radius:2px;opacity:.9}
+    .dot{width:5px;height:5px;border-radius:50%;background:var(--accent-weak);opacity:.9}
+
+    .spacer{height:1px}
+    .links{display:flex; flex-wrap:wrap; gap:8px}
+    .links .break{flex-basis:100%; height:0}
+    .pill{
+      border:var(--border); border-radius:999px; padding:.34rem .56rem;
+      color:var(--ink); background:transparent;
+      text-decoration:none; font-weight:600; font-size:.86rem;
+      transition:box-shadow .12s ease, background .12s ease, border-color .12s ease
+    }
+    .pill:hover{background:var(--hover-bg); border-color:var(--line-strong)}
+    .pill:focus-visible{outline:0; box-shadow:var(--ring)}
+
+    .copyright{margin-top:4px}
+
+    /* ===== Main (cleaner separators, less decoration) ===== */
+    main{padding:calc(var(--pad)*.8) var(--pad)}
+    section{padding:18px 0; max-width:960px}
+    .section-head{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:8px;
+      border-bottom:var(--divide); padding-bottom:6px; margin-bottom:6px
+    }
+    .anchor-target{scroll-margin-top:12px}
+    .tiny{font-size:.84rem}
+    .muted{color:var(--muted)}
+
+    /* Pills/stack */
+    .stack{display:flex; flex-wrap:wrap; gap:.28rem .36rem; margin:.28rem 0 .5rem}
+    .stack li{
+      list-style:none; font-size:.78rem; line-height:1; padding:.26rem .44rem;
+      border-radius:999px; border:1px solid var(--line); color:var(--chip); background:transparent
+    }
+
+    /* Grids & Cards — equal height, no lifts, soft ring on hover */
+    .grid{display:grid; gap:var(--gap); align-items:stretch; grid-auto-rows:1fr}
+    .two{grid-template-columns:repeat(2, minmax(0,1fr))}
+    .three{grid-template-columns:repeat(3, minmax(0,1fr))}
+    .grid > *{height:100%}
+
+    .card{
+      display:flex; flex-direction:column;
+      background:var(--bg-1); border:var(--border); border-radius:12px;
+      padding:clamp(10px,1.5vw,14px);
+      transition:box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .card:hover{box-shadow:var(--ring); border-color:var(--line-strong)}
+    .thumb{width:100%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; margin-bottom:.5rem; flex:0 0 auto}
+    .thumb img{width:100%; height:100%; display:block; object-fit:cover}
+    .card h3{margin:.15rem 0 .25rem}
+    .card p{margin:0 0 .4rem}
+    .meta{display:flex; gap:6px; flex-wrap:wrap; margin:.2rem 0 .35rem}
+    .tag{font-size:.74rem; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:.14rem .42rem}
+    .card .grow{flex:1 1 auto}
+    .row{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-top:auto}
+    .btn{
+      display:inline-flex; align-items:center; gap:.5ch; border:var(--border); border-radius:8px;
+      padding:.42rem .64rem; background:transparent; color:var(--ink); text-decoration:none; font-weight:600; font-size:.9rem;
+      transition:box-shadow .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .btn:hover{background:var(--hover-bg); border-color:var(--line-strong)}
+    .btn:focus-visible{outline:0; box-shadow:var(--ring)}
+
+    /* “See more” — simplified */
+    details.more{margin-top:8px}
+    details.more[open] .more-grid{margin-top:8px}
+    details.more summary{
+      list-style:none; cursor:pointer; user-select:none; padding:.38rem .56rem; border-radius:8px; border:var(--border);
+      display:inline-flex; align-items:center; gap:.5ch; color:var(--ink); background:transparent; font-weight:600;
+      font-family:"Inter Tight","Inter",system-ui,-apple-system, Segoe UI, Arial, sans-serif; font-size:.93rem;
+      transition:box-shadow .12s ease, background .12s ease, border-color .12s ease;
+    }
+    details.more summary::-webkit-details-marker{display:none}
+    details.more summary:hover{background:var(--hover-bg); border-color:var(--line-strong)}
+    details.more summary:focus-visible{outline:0; box-shadow:var(--ring)}
+
+    /* Responsive */
+    @media (max-width:1024px){ .three{grid-template-columns:repeat(2, minmax(0,1fr))} }
+    @media (max-width:640px){
+      .shell{grid-template-columns: 1fr}
+      .aside{position:static; height:auto; border-right:none; border-bottom:var(--divide)}
+      main{padding-top:var(--pad)}
+      .two,.three{grid-template-columns:1fr}
+    }
+
+    /* A11y */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
+    .skip-link:focus{left:12px;top:12px;width:auto;height:auto;z-index:9999;background:#000;color:#fff;padding:.5rem .6rem;border-radius:8px;outline:2px solid var(--accent)}
+
+    /* Theme toggle */
+    .theme-toggle{
+      position:fixed; right:12px; bottom:12px; z-index:10000; display:inline-grid; place-items:center;
+      width:38px; height:38px; border-radius:10px; border:var(--border); background:var(--bg-1); cursor:pointer;
+      transition:box-shadow .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .theme-toggle:hover{box-shadow:var(--ring); border-color:var(--line-strong)}
+    .theme-toggle svg{ width:18px; height:18px; fill:currentColor }
+    html.theme-dark .icon-sun{ display:none } html.theme-dark .icon-moon{ display:block }
+    html.theme-light .icon-sun{ display:block } html.theme-light .icon-moon{ display:none }
+
+    /* Print / PDF — single page, minimal ink */
+    @page { size: A4; margin: 10mm 12mm; }
+    @media print{
+      html,body{background:#fff !important; color:#000 !important; font:11.2pt/1.35 "Inter", system-ui, -apple-system, Segoe UI, Arial, sans-serif !important}
+      a{color:#000 !important; text-decoration:underline !important}
+      .theme-toggle,.print-btn,.skip-link{display:none !important}
+      .wrap{max-width:none; padding:0 !important}
+      .shell{display:block !important}
+      .aside{display:none !important}
+      main{padding:0 !important; width:auto !important}
+      .section-head{border:none !important; padding:0 !important; margin:.2rem 0 .3rem !important}
+      h1,h2,h3{color:#000 !important; margin:0 0 .2rem !important}
+      h2{font-size:13pt !important}
+      h3{font-size:11.5pt !important; font-weight:700 !important; opacity:.95}
+      .stack{margin:.15rem 0 .25rem !important}
+      .stack li{display:inline; border:none !important; padding:0 !important; color:#000 !important}
+      .stack li::after{content:", "; white-space:pre}
+      .stack li:last-child::after{content:""}
+      .grid{display:block !important}
+      .card{border:none !important; padding:0 !important; margin:0 0 .35rem 0 !important; box-shadow:none !important; background:none !important}
+      .thumb,.meta,.tag,.row .btn{display:none !important}
+      .row{display:inline !important; gap:0 !important}
+      .btn{border:none !important; padding:0 !important; font-weight:600 !important; color:#000 !important; text-decoration:underline !important}
+      details.more{display:none !important}
+      p{margin:.15rem 0 .3rem !important}
+      .print-header{display:block !important; margin:0 0 .6rem 0 !important; border-bottom:1px solid #000 !important; padding:0 0 .35rem 0 !important}
+      .print-header .name{font-size:18pt !important; margin:0 !important}
+      .print-header .role{font-size:11pt !important; color:#000 !important; margin:.05rem 0 0 !important}
+      .print-header .links{display:block !important; margin:.25rem 0 0 !important}
+      .print-header .links a{margin-right:.6rem !important}
+      *{page-break-inside:avoid}
+    }
+
+    /* Motion reduce */
+    @media (prefers-reduced-motion: reduce){
+      *{transition-duration:.001ms !important; scroll-behavior:auto !important}
+    }
+  </style>
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Person",
+    "name":"Pedro Pita",
+    "jobTitle":"Web Developer & Creative Technologist",
+    "url":"https://pedropita.dev",
+    "email":"mailto:hello@pedropita.dev",
+    "address":{"@type":"PostalAddress","addressLocality":"Lisbon","addressCountry":"PT"},
+    "affiliation":[
+      {"@type":"Organization","name":"Mojobyte","url":"https://mojobyte.com"},
+      {"@type":"Organization","name":"Iron Signal Works","url":"https://ironsignalworks.com"}
+    ],
+    "sameAs":["https://www.linkedin.com/in/pedropita","https://github.com/ironsignalworks"]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+
+  <button class="print-btn" type="button" aria-label="Print or save as PDF" title="Print / Save PDF" style="position:fixed;right:12px;bottom:56px;border:var(--border);background:var(--bg-1);color:var(--ink);padding:.44rem .6rem;border-radius:8px;">Print / PDF</button>
+  <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme">
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a1 1 0 0 1 1 1V6a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1zm0 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm8-5a1 1 0 0 1 1 1 1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h1zM5 12a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h1zm10.95 6.536a1 1 0 0 1 1.414 0l.707.707a1 1 0 1 1-1.414 1.414l-.707-.707a1 1 0 0 1 0-1.414zM6.636 6.636a1 1 0 0 1 0-1.414l.707-.707A1 1 0 1 1 8.757 5.93l-.707.707a1 1 0 0 1 0-1.414zM6.636 17.364a1 1 0 0 1 1.414 0l.707.707A1 1 0 1 1 7.343 19.485l-.707-.707a1 1 0 0 1 0-1.414zM16.95 5.05a1 1 0 0 1 1.414 0l.707.707A1 1 0 0 1 17.657 7.17l-.707-.707a1 1 0 0 1 0-1.414z"/></svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 1 0 9.79 9.79z"/></svg>
+  </button>
+
+  <div class="wrap shell">
+    <!-- Sidebar -->
+    <aside class="aside" aria-label="Site header">
+      <div class="brand">
+        <div class="name">Pedro Pita</div>
+        <div class="role">Web Developer · Creative Technologist</div>
+        <p class="blurb tiny">
+          Shipping clean, production web work. Past life in video, sound, and data—now building quiet, fast interfaces and the systems behind them.
+          I love birds, vintage horror movies, guitars, and synths.
+        </p>
+        <ul class="tiny value-props" aria-label="Value propositions">
+          <li><strong>Production:</strong> clean UI, stable APIs, clear hand-offs.</li>
+          <li><strong>Taste &amp; timing:</strong> media background → better motion, hierarchy, pacing.</li>
+          <li><strong>Pragmatic stack:</strong> sensible databases, straightforward deploys, measurable speed.</li>
+        </ul>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="#about" class="navlink"><span class="dot" aria-hidden="true"></span> About</a>
+        <a href="#work" class="navlink"><span class="dot" aria-hidden="true"></span> Work</a>
+        <a href="#projects" class="navlink"><span class="dot" aria-hidden="true"></span> Projects</a>
+        <a href="#contact" class="navlink"><span class="dot" aria-hidden="true"></span> Contact</a>
+      </nav>
+
+      <div class="spacer" aria-hidden="true"></div>
+
+      <div class="links" aria-label="Social & orgs">
+        <a class="pill" href="mailto:hello@pedropita.dev">Email</a>
+        <a class="pill" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="pill" href="https://github.com/ironsignalworks" target="_blank" rel="noopener">GitHub</a>
+        <span class="break" aria-hidden="true"></span>
+        <a class="pill" href="https://mojobyte.com" target="_blank" rel="noopener">Mojobyte</a>
+        <a class="pill" href="https://ironsignalworks.com" target="_blank" rel="noopener">Catastrophic Labs</a>
+      </div>
+
+      <p class="tiny muted copyright">© <span id="year"></span> Lisbon, PT</p>
+    </aside>
+
+    <!-- Main -->
+    <main id="content">
+      <!-- Print-only compact header -->
+      <header class="print-header" style="display:none">
+        <div class="name">Pedro Pita</div>
+        <div class="role">Web Developer · Creative Technologist — Lisbon (Remote OK)</div>
+        <div class="links">
+          <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
+          <a href="https://www.linkedin.com/in/pedropita">linkedin.com/in/pedropita</a>
+          <a href="https://github.com/ironsignalworks">github.com/ironsignalworks</a>
+          <a href="https://mojobyte.com">mojobyte.com</a>
+          <a href="https://ironsignalworks.com">ironsignalworks.com</a>
+        </div>
+      </header>
+
+      <h1 class="sr-only">Pedro Pita — Web Developer & Creative Technologist</h1>
+
+      <!-- About -->
+      <section id="about" class="anchor-target">
+        <div class="section-head">
+          <h2>About</h2>
+        </div>
+
+        <ul class="stack" aria-label="Core skills">
+          <li>JavaScript</li><li>Next.js</li><li>React</li><li>Node.js</li><li>REST APIs</li>
+          <li>TypeScript</li><li>Tailwind CSS</li><li>Vercel</li><li>Figma</li>
+        </ul>
+
+        <p>
+          I design and ship lean, high-performance web products—accessible, fast, and easy to maintain.
+          From content models to APIs and deployment, I keep the stack invisible and the outcome clear.
+        </p>
+
+        <div class="grid two">
+          <article class="card">
+            <h3>What I’m good at</h3>
+            <p class="muted">Front-end feature work, performant layouts, API integrations, and tidy content systems.</p>
+            <div class="meta"><span class="tag">Performance</span><span class="tag">A11y</span><span class="tag">SEO</span></div>
+            <div class="grow"></div>
+          </article>
+
+          <article class="card">
+            <h3>Availability</h3>
+            <p class="muted">Open to junior front-end/full-stack roles and selected client work.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="mailto:hello@pedropita.dev">Email</a>
+              <a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Work -->
+      <section id="work" class="anchor-target">
+        <div class="section-head">
+          <h2>Selected Client Work</h2>
+          <span class="tiny muted">Shipped under Mojobyte</span>
+        </div>
+
+        <ul class="stack" aria-label="Stacks used">
+          <li>Next.js</li><li>React</li><li>Tailwind</li><li>Vercel</li><li>Figma</li><li>REST APIs</li><li>SQL</li>
+        </ul>
+
+        <div class="grid two">
+          <article class="card" data-thumb="/assets/thumbs/mojobyte.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Mojobyte — dev & hosting" src="/assets/thumbs/mojobyte.jpg" width="1600" height="900"></figure>
+            <h3>Mojobyte — Web Dev Company</h3>
+            <p class="muted">Clear service pages and pricing. SEO-ready, fast, easy to maintain.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="https://mojobyte.com" target="_blank" rel="noopener">Visit</a>
+            </div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/iron-signal-works.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Iron Signal Works — site" src="/assets/thumbs/iron-signal-works.jpg" width="1600" height="900"></figure>
+            <h3>Iron Signal Works — Indie Game Studio</h3>
+            <p class="muted">Lean studio site with media embeds and simple publishing flow.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="https://ironsignalworks.com" target="_blank" rel="noopener">Visit</a>
+            </div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/nova.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="NovaScript — corporate" src="/assets/thumbs/nova.jpg" width="1600" height="900"></figure>
+            <h3>NovaScript AI — Corporate Website</h3>
+            <p class="muted">Direct copy, clean IA, and sensible on-page SEO.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="https://novascript.eu" target="_blank" rel="noopener">Visit</a>
+            </div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/gamma.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Gamma Threads" src="/assets/thumbs/gamma.jpg" width="1600" height="900"></figure>
+            <h3>Gamma Threads — Clothing + Game</h3>
+            <p class="muted">Brand page with embedded mini-game and simple merch pipeline.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="https://gamma-threads.com" target="_blank" rel="noopener">Visit</a>
+            </div>
+          </article>
+        </div>
+
+        <details class="more">
+          <summary aria-controls="more-work" aria-expanded="false">See more projects</summary>
+          <div id="more-work" class="more-grid grid two" role="region" aria-label="More client work">
+            <article class="card" data-thumb="/assets/thumbs/mumia.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Mumia Mad Butcher" src="/assets/thumbs/mumia.jpg" width="1600" height="900"></figure>
+              <h3>Mumia Mad Butcher — Tattoo Studio</h3>
+              <p class="muted">Fast gallery & booking. Image optimization baked in.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://mumiamadbutcher.com" target="_blank" rel="noopener">Visit</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/deadgravel.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Dead Gravel" src="/assets/thumbs/deadgravel.jpg" width="1600" height="900"></figure>
+              <h3>Dead Gravel — Band + Storefront</h3>
+              <p class="muted">Shows, merch, mailing list with a clean admin flow.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://deadgravel.com" target="_blank" rel="noopener">Visit</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/shiatsu.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Manuel Pereira Shiatsu" src="/assets/thumbs/shiatsu.jpg" width="1600" height="900"></figure>
+              <h3>Manuel Pereira — Wellness Site</h3>
+              <p class="muted">Serene, scroll-driven site with subtle micro-interactions.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://manuelpereirashiatsu.com" target="_blank" rel="noopener">Visit</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/nagasaki.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Nagasaki Sunrise" src="/assets/thumbs/nagasaki.jpg" width="1600" height="900"></figure>
+              <h3>Nagasaki Sunrise — Band Page</h3>
+              <p class="muted">Gallery, shows, merch, hidden mini-game Easter egg.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://nagasakisunrise.com" target="_blank" rel="noopener">Visit</a></div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Projects -->
+      <section id="projects" class="anchor-target">
+        <div class="section-head">
+          <h2>Selected Games & Apps</h2>
+          <span class="tiny muted">Catastrophic Labs</span>
+        </div>
+
+        <h3 class="muted" style="margin:.2rem 0 6px">Games</h3>
+        <ul class="stack" aria-label="Game tech">
+          <li>HTML5 Canvas</li><li>WebGL</li><li>Pixi.js</li><li>GSAP</li>
+        </ul>
+
+        <div class="grid three">
+          <article class="card" data-thumb="/assets/thumbs/jungle.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Jungle Siege" src="/assets/thumbs/jungle.jpg" width="1600" height="900"></figure>
+            <h3>Jungle Siege (in progress)</h3>
+            <p class="muted">Top-down action with custom HUD, bosses, cinematic intros.</p>
+            <div class="grow"></div>
+            <div class="row"><a class="btn" href="https://ironsignalworks.com/games/jungle-siege" target="_blank" rel="noopener">Prototype</a></div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/reaktor.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Reaktor 404" src="/assets/thumbs/reaktor.jpg" width="1600" height="900"></figure>
+            <h3>Reaktor 404</h3>
+            <p class="muted">Tiny arcade embed for the apparel site.</p>
+            <div class="grow"></div>
+            <div class="row"><a class="btn" href="https://ironsignalworks.com/games/reaktor-404" target="_blank" rel="noopener">Play</a></div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/spam.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="Spam Invaders" src="/assets/thumbs/spam.jpg" width="1600" height="900"></figure>
+            <h3>Spam Invaders</h3>
+            <p class="muted">Win98-flavored Space Invaders—just for fun.</p>
+            <div class="grow"></div>
+            <div class="row"><a class="btn" href="https://ironsignalworks.com/games/spaminvaders" target="_blank" rel="noopener">Play</a></div>
+          </article>
+        </div>
+
+        <details class="more">
+          <summary aria-controls="more-games" aria-expanded="false">See more projects</summary>
+          <div id="more-games" class="more-grid grid three" role="region" aria-label="More games">
+            <article class="card" data-thumb="/assets/thumbs/depthcharge.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Depthcharge" src="/assets/thumbs/depthcharge.jpg" width="1600" height="900"></figure>
+              <h3>Depthcharge</h3>
+              <p class="muted">Minimalist naval arcade—tight loop, crunchy feedback.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://ironsignalworks.com/games/depthcharge" target="_blank" rel="noopener">Play</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/vault.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Vault Hunter" src="/assets/thumbs/vault.jpg" width="1600" height="900"></figure>
+              <h3>Vault Hunter</h3>
+              <p class="muted">Micro-dungeon with inventory stings and punchy collisions.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" href="https://ironsignalworks.com/games/vault-hunter" target="_blank" rel="noopener">Play</a></div>
+            </article>
+          </div>
+        </details>
+
+        <h3 class="muted" style="margin:12px 0 6px">Apps</h3>
+        <ul class="stack" aria-label="App tech">
+          <li>React</li><li>Next.js</li><li>Node</li><li>OpenAI API</li><li>Workers</li>
+        </ul>
+
+        <div class="grid two">
+          <article class="card" data-thumb="/assets/thumbs/radiofry.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="RadioFry — DAW" src="/assets/thumbs/radiofry.jpg" width="1600" height="900"></figure>
+            <h3>Radiofry — DAW (API + Offline Render)</h3>
+            <p class="muted">Browser DAW experiments with offline render flow.</p>
+            <div class="grow"></div>
+            <div class="row"><a class="btn" aria-disabled="true" href="#" tabindex="-1">Demo (soon)</a></div>
+          </article>
+
+          <article class="card" data-thumb="/assets/thumbs/assistant.jpg">
+            <figure class="thumb"><img loading="lazy" decoding="async" alt="AI Assistant" src="/assets/thumbs/assistant.jpg" width="1600" height="900"></figure>
+            <h3>AI Assistant (in prod)</h3>
+            <p class="muted">Internal assistant with tools and memory.</p>
+            <div class="grow"></div>
+            <div class="row"><a class="btn" aria-disabled="true" href="#" tabindex="-1">Demo (internal)</a></div>
+          </article>
+        </div>
+
+        <details class="more">
+          <summary aria-controls="more-apps" aria-expanded="false">See more projects</summary>
+          <div id="more-apps" class="more-grid grid two" role="region" aria-label="More apps">
+            <article class="card" data-thumb="/assets/thumbs/cypher.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Cypher Engine" src="/assets/thumbs/cypher.jpg" width="1600" height="900"></figure>
+              <h3>Cypher Engine — Code Converter</h3>
+              <p class="muted">Convert code between formats with a clean UI and quick actions.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" aria-disabled="true" href="#" tabindex="-1">Demo (soon)</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/ascii.jpg">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="ASCII Converter" src="/assets/thumbs/ascii.jpg" width="1600" height="900"></figure>
+              <h3>ASCII Converter</h3>
+              <p class="muted">Fast text-to-ASCII with copy/download options.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" aria-disabled="true" href="#" tabindex="-1">Demo (soon)</a></div>
+            </article>
+
+            <article class="card" data-thumb="/assets/thumbs/dashboard.jpg" style="grid-column:1/-1">
+              <figure class="thumb"><img loading="lazy" decoding="async" alt="Client Dashboard" src="/assets/thumbs/dashboard.jpg" width="1600" height="900"></figure>
+              <h3>Client Dashboard (in prod)</h3>
+              <p class="muted">Role-based admin, analytics, and content tooling. Built for speed.</p>
+              <div class="grow"></div>
+              <div class="row"><a class="btn" aria-disabled="true" href="#" tabindex="-1">Overview (soon)</a></div>
+            </article>
+          </div>
+        </details>
+      </section>
+
+      <!-- Contact -->
+      <section id="contact" class="anchor-target">
+        <div class="section-head">
+          <h2>Contact</h2>
+          <span class="tiny muted">Lisbon · Remote OK</span>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <p>Best way to reach me: <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>. I reply fast.</p>
+            <div class="grow"></div>
+            <div class="row">
+              <a class="btn" href="mailto:hello@pedropita.dev">Email</a>
+              <a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">LinkedIn</a>
+              <a class="btn" href="https://github.com/ironsignalworks" target="_blank" rel="noopener">GitHub</a>
+              <a class="btn" href="https://mojobyte.com" target="_blank" rel="noopener">Mojobyte</a>
+              <a class="btn" href="https://ironsignalworks.com" target="_blank" rel="noopener">ISW</a>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Year -->
+  <script>
+    const y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();
+  </script>
+
+  <!-- Scroll spy -->
+  <script>
+    (function(){
+      const links = [...document.querySelectorAll('.nav .navlink')];
+      const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+      const setActive = id => {
+        links.forEach(a => {
+          const on = a.getAttribute('href') === '#' + id;
+          a.classList.toggle('active', on);
+          if (on) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+        });
+      };
+      const ratios = new Map();
+      let ticking = false;
+      const pickWinner = () => {
+        let best = '', bestRatio = 0;
+        ratios.forEach((r, id) => { if (r > bestRatio) { bestRatio = r; best = id; }});
+        if (!best) {
+          const center = window.scrollY + (window.innerHeight/2);
+          let nearest = '', nearDist = Infinity;
+          sections.forEach(s => {
+            const dist = Math.abs(s.offsetTop - center);
+            if (dist < nearDist) { nearest = s.id; nearDist = dist; }
+          });
+          best = nearest;
+        }
+        if (best) setActive(best);
+      };
+      if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver((entries)=>{
+          entries.forEach(e => ratios.set(e.target.id, e.intersectionRatio||0));
+          if (!ticking) { ticking = true; requestAnimationFrame(()=>{ pickWinner(); ticking=false; }); }
+        }, { threshold:[0,0.1,0.25,0.5,0.75,1] });
+        sections.forEach(s => obs.observe(s));
+      }
+      const atBottom = () => (innerHeight + scrollY >= document.documentElement.scrollHeight - 2);
+      const onScrollResize = () => { if (atBottom()) { setActive('contact'); return; } pickWinner(); };
+      addEventListener('scroll', onScrollResize, {passive:true});
+      addEventListener('resize', onScrollResize);
+      pickWinner();
+    })();
+  </script>
+
+  <!-- Theme toggle (persist) -->
+  <script>
+    (function(){
+      const KEY='pp-theme', root=document.documentElement;
+      try{
+        const stored=localStorage.getItem(KEY);
+        const prefersDark=matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+        const initial=stored || (prefersDark?'dark':'light');
+        root.classList.remove('theme-dark','theme-light'); root.classList.add('theme-'+initial);
+      }catch(e){}
+      const btn=document.querySelector('.theme-toggle');
+      if(btn){
+        btn.addEventListener('click', ()=>{
+          const next=root.classList.contains('theme-dark')?'light':'dark';
+          root.classList.remove('theme-dark','theme-light'); root.classList.add('theme-'+next);
+          try{ localStorage.setItem(KEY, next); }catch(e){}
+        });
+      }
+    })();
+  </script>
+
+  <!-- Auto-thumbs -->
+  <script>
+    (function(){
+      const slugify = s => s.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      document.querySelectorAll('.card').forEach(card=>{
+        if(card.querySelector('.thumb')) return;
+        let src=card.getAttribute('data-thumb');
+        if(!src){
+          const t=card.querySelector('h3,h2'); if(!t) return;
+          src='/assets/thumbs/'+slugify(t.textContent.trim())+'.jpg';
+        }
+        const fig=document.createElement('figure'); fig.className='thumb';
+        const img=document.createElement('img');
+        img.loading='lazy'; img.decoding='async'; img.width=1600; img.height=900;
+        img.alt=(card.querySelector('h3,h2')?.textContent.trim()||'Project')+' thumbnail';
+        img.src=src; img.onerror=()=>fig.remove();
+        fig.appendChild(img);
+        const first=card.firstElementChild; if(first) card.insertBefore(fig, first); else card.appendChild(fig);
+      });
+    })();
+  </script>
+
+  <!-- Print trigger -->
+  <script>
+    (function(){
+      const p=document.querySelector('.print-btn');
+      if(p){ p.addEventListener('click', ()=>window.print()); }
+    })();
+  </script>
+</body>
+</html>
