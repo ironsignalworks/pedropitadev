@@ -4,25 +4,27 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pedro Pita — Win98 Desktop Portfolio</title>
-<meta name="description" content="Lisbon-based web developer shipping performant, accessible web products and durable publishing pipelines — now in a playful Windows 98 desktop." />
+<meta name="description" content="A retro Win98-style desktop — vanilla JS, accessible, draggable/resizable windows, Start Menu, taskbar, and an inline KOMMANDO game." />
 <meta name="theme-color" content="#008080" />
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  /* ===== Win98 Desktop Shell — Single file, no deps ===== */
   :root{
-    --desk-green:#008080;      /* classic teal */
-    --title-blue:#000080;      /* win98 title bar */
+    --desk-green:#008080;
+    --title-blue:#000080;
     --title-blue-inactive:#5b7aa0;
-    --gray-0:#c0c0c0;          /* 3D face */
-    --gray-1:#dfdfdf;          /* light */
-    --gray-2:#808080;          /* shadow */
+    --gray-0:#c0c0c0;
+    --gray-1:#dfdfdf;
+    --gray-2:#808080;
     --black:#000; --white:#fff;
     --ink:#111;
-    --accent:#0000ee;
     --bar-h:32px;
-    --z-task:1000; --z-win:2000; --z-menu:3000;
+    --icon-w:120px;
+    --glyph:72px;
+    --rowH:132px;
+    --pad:16px;
+    --z-task:1000; --z-win:2000; --z-menu:3000; --z-start:3500;
   }
   html,body{height:100%}
   body{
@@ -30,114 +32,140 @@
     font:14px/1.45 Tahoma, "MS Sans Serif", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
     -webkit-font-smoothing:antialiased; overflow:hidden;
   }
-  /* Retro pixel-edges */
   *{image-rendering:pixelated}
 
   /* ===== Desktop ===== */
   .desktop{
     position:fixed; inset:0; display:grid; grid-template-rows:1fr var(--bar-h);
-    background: linear-gradient(0deg, rgba(0,0,0,.25), rgba(0,0,0,.25)), url('canyon1.jpg') center / cover no-repeat fixed;
+    background:
+      linear-gradient(0deg, rgba(0,0,0,.18), rgba(0,0,0,.18)),
+      url('canyon1.jpg') center / cover no-repeat fixed;
   }
-
-  /* Desktop icons */
-  .icons{position:relative; padding:10px; overflow:auto}
-  .icon{position:absolute; width:88px; text-align:center; color:#fff; cursor:default; user-select:none; appearance:none; background:transparent; border:0; padding:4px; margin:0}
-.icon::-moz-focus-inner{border:0; padding:0}
-  .icon .glyph{width:48px;height:48px;margin:0 auto 4px;display:grid;place-items:center;background:transparent;border:none;box-shadow:none;position:relative}
-/* CSS-only Win98 folder icon */
-.icon .glyph.folder{--fc:#f7d87a;--fd:#e1c464;--edge:#876d2b;}
-.icon .glyph.folder::before{content:"";position:absolute;left:2px;top:6px;width:20px;height:9px;background:var(--fc);border:1px solid var(--edge);border-bottom:none;box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
-.icon .glyph.folder::after{content:"";position:absolute;left:2px;top:12px;width:44px;height:30px;background:linear-gradient(#f7d87a,#f1cf69);border:1px solid var(--edge);box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
-  .icon .label{display:inline-block; padding:2px 4px; background:rgba(0,0,128,.35); outline:1px solid rgba(255,255,255,.35); text-shadow:1px 1px 0 #000}
-  .icon:focus .label, .icon.kbd .label{background:#000080; outline:1px solid #fff}
+  .icons{position:relative; padding:var(--pad); overflow:hidden}
+  .icon{
+    position:absolute; width:var(--icon-w); text-align:center; color:#fff;
+    cursor:default; user-select:none; appearance:none; background:transparent; border:0;
+    padding:6px; margin:0; touch-action:none
+  }
+  .icon:focus{outline:2px dotted #fff; outline-offset:2px}
+  .icon .glyph{width:var(--glyph);height:var(--glyph);margin:0 auto 6px;display:grid;place-items:center;position:relative}
+  .icon .label{display:inline-block; padding:4px 6px; background:rgba(0,0,128,.35); outline:1px solid rgba(255,255,255,.35); text-shadow:1px 1px 0 #000; font-size:15px}
+  .icon:focus .label{background:#000080; outline:1px solid #fff}
+  .folder::before{content:"";position:absolute;left:3px;top:6px;width:26px;height:11px;background:#f7d87a;border:1px solid #876d2b;border-bottom:none;box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
+  .folder::after{content:"";position:absolute;left:3px;top:14px;width:64px;height:44px;background:linear-gradient(#f7d87a,#f1cf69);border:1px solid #876d2b;box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
+  .file::before{content:"";position:absolute;left:10px;top:6px;width:48px;height:60px;background:#fff;border:1px solid #444;box-shadow:inset -1px -1px 0 #aaa, inset 1px 1px 0 #fff}
+  .file::after{content:"TXT";position:absolute;left:14px;top:46px;font:bold 11px/1 JetBrains Mono,monospace;color:#000}
+  .glyph svg, .glyph img{width:64px;height:64px;display:block}
 
   /* ===== Windows ===== */
-  .win{position:absolute; top:100px; left:140px; width:min(880px, 88vw); max-height:70vh; display:flex; flex-direction:column; background:var(--gray-0); border:2px solid var(--black); box-shadow:2px 2px 0 var(--gray-2), -1px -1px 0 var(--white);}
-  .titlebar{height:28px; background:linear-gradient( to right, var(--title-blue), #1a2a8a ); color:#fff; display:flex; align-items:center; padding:0 6px; gap:6px; cursor:grab; user-select:none}
+  .win{
+    position:absolute; top:100px; left:140px; width:min(900px, 90vw); max-height:72vh;
+    display:flex; flex-direction:column; background:var(--gray-0); border:2px solid var(--black);
+    box-shadow:2px 2px 0 var(--gray-2), -1px -1px 0 var(--white);
+  }
+  .titlebar{
+    height:28px; background:linear-gradient( to right, var(--title-blue), #1a2a8a ); color:#fff;
+    display:flex; align-items:center; padding:0 6px; gap:6px; cursor:grab; user-select:none
+  }
   .win.inactive .titlebar{background:linear-gradient(to right, var(--title-blue-inactive), #8aa8c7)}
-  .titlebar .title{flex:1 1 auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .titlebar .title{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .titlebar .ctl{display:flex; gap:2px}
   .btn3d{width:22px; height:20px; display:grid; place-items:center; background:var(--gray-0); border:2px solid var(--gray-2); border-right-color:var(--white); border-bottom-color:var(--white); cursor:pointer}
   .btn3d:active{border:2px solid var(--white); border-right-color:var(--gray-2); border-bottom-color:var(--gray-2)}
   .menubar{height:26px; background:var(--gray-0); display:flex; align-items:center; gap:16px; padding:0 8px; border-top:2px solid var(--white); border-left:2px solid var(--white); border-right:2px solid var(--gray-2); border-bottom:2px solid var(--gray-2)}
-  .menubar .menuitem{padding:2px 6px; border:1px solid transparent; cursor:default}
-  .menubar .menuitem:hover{background:var(--gray-1); border-color:var(--gray-2)}
-  .content{flex:1 1 auto; overflow:auto; padding:10px; background:var(--gray-1); border-top:2px solid var(--white); border-left:2px solid var(--white);}
-  .statusbar{height:22px; background:var(--gray-0); border-top:2px solid var(--white); display:flex; align-items:center; gap:8px; padding:0 6px}
-  .resize{position:absolute; width:14px; height:14px; right:0; bottom:var(--bar-h); cursor:nwse-resize;}
+  .menuitem{position:relative; padding:0 6px; cursor:default}
+  .menuitem[aria-expanded="true"]{background:#dfe9ff; outline:1px solid #6c8cd5}
+  .menu-drop{position:absolute; top:100%; left:0; background:#fff; border:1px solid #000; box-shadow:4px 4px 0 #0003; display:none; min-width:160px; z-index:2}
+  .menu-drop button{appearance:none; border:0; background:#fff; display:block; width:100%; text-align:left; padding:6px 10px; font:13px Tahoma}
+  .menu-drop button:hover{background:#cce5ff}
+  .content{flex:1; overflow:auto; padding:10px; background:var(--gray-1); border-top:2px solid var(--white); border-left:2px solid var(--white);}
+  .statusbar{height:22px; background:var(--gray-0); border-top:2px solid var(--white); display:flex; align-items:center; gap:8px; padding:0 6px; font-variant-numeric:tabular-nums}
+  .grip{position:absolute; right:0; bottom:0; width:14px; height:14px; background:repeating-linear-gradient(135deg,#999 0 2px,#ccc 2px 4px); cursor:nwse-resize; border-left:1px solid #999; border-top:1px solid #999}
+  .win.inactive{filter:saturate(.92) brightness(.98)}
 
-  /* Bring to front */
-  .win{z-index:var(--z-win)}
-
-  /* ===== Taskbar ===== */
+  /* ===== Taskbar + Start Menu ===== */
   .taskbar{height:var(--bar-h); background:var(--gray-0); display:flex; align-items:center; gap:8px; padding:4px; border-top:2px solid var(--white); box-shadow:0 -1px 0 var(--gray-2) inset}
   .start{display:inline-flex; align-items:center; gap:6px; padding:0 10px; height:24px; background:var(--gray-0); border:2px solid var(--gray-2); border-right-color:var(--white); border-bottom-color:var(--white); cursor:pointer; font-weight:600}
   .start:active{border:2px solid var(--white); border-right-color:var(--gray-2); border-bottom-color:var(--gray-2)}
   .tasklist{display:flex; gap:6px; align-items:center; overflow:auto; scrollbar-width:thin}
-  .task{min-width:120px; max-width:240px; height:24px; display:inline-flex; align-items:center; gap:6px; padding:0 8px; background:var(--gray-0); border:2px solid var(--gray-2); border-right-color:var(--white); border-bottom-color:var(--white); cursor:pointer}
+  .task{min-width:140px; max-width:260px; height:24px; display:inline-flex; align-items:center; gap:6px; padding:0 8px; background:var(--gray-0); border:2px solid var(--gray-2); border-right-color:var(--white); border-bottom-color:var(--white); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .task.active{background:#e4e4e4}
   .clock{margin-left:auto; background:#e4e4e4; height:24px; padding:0 8px; display:inline-grid; place-items:center; border:2px solid var(--gray-2); border-right-color:var(--white); border-bottom-color:var(--white); font-variant-numeric:tabular-nums}
 
-  /* ===== Portfolio content styling inside window ===== */
-  .content h2{margin:0 0 8px; font:700 20px/1.2 Tahoma, "MS Sans Serif", sans-serif}
-  .content h3{margin:8px 0 6px; font:700 16px/1.2 Tahoma, "MS Sans Serif", sans-serif}
-  .stack{display:flex; flex-wrap:wrap; gap:4px}
-  .stack span{padding:3px 6px; border:1px solid #bbb; background:#f6f6f6}
+  .startmenu{position:fixed; left:4px; bottom:var(--bar-h); width:260px; display:none; flex-direction:column; background:#f0f0f0; border:2px solid #000; box-shadow:4px 4px 0 #0004; z-index:var(--z-start)}
+  .startmenu .brand{padding:8px; font-weight:700; background:#004; color:#fff}
+  .startmenu .item{display:flex; align-items:center; gap:8px; padding:8px; border-top:1px solid #ddd; cursor:pointer}
+  .startmenu .item:hover{background:#dfe9ff}
+
+  /* ===== Content helpers ===== */
   .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
   .card{border:1px solid #b0b0b0; background:#efefef; padding:8px}
-  .thumb{aspect-ratio:16/9; background:#c9c9c9; display:grid; place-items:center; font:600 12px/1 'JetBrains Mono', monospace; color:#333; margin-bottom:6px}
+  .thumb{aspect-ratio:16/9; background:#c9c9c9; display:grid; place-items:center; font:600 12px/1 JetBrains Mono, monospace; color:#333; margin-bottom:6px}
+  .stack{display:flex; flex-wrap:wrap; gap:4px}
+  .stack span{padding:3px 6px; border:1px solid #bbb; background:#f6f6f6}
   .btn{display:inline-block; padding:4px 8px; border:1px solid #888; background:#eee; text-decoration:none; color:#000}
   .btn:hover{background:#fff}
+  .mono{font:13px/1.5 JetBrains Mono, ui-monospace, monospace; white-space:pre-wrap}
+  .dlg{border:2px solid #000; padding:10px; background:#eee}
+  .dlg .row{display:flex; gap:8px; justify-content:flex-end}
 
-  .ascii-pad{width:100%;height:48vh;min-height:260px;resize:vertical;border:1px solid #888;background:#111;color:#0f0;font:12px/1.25 'JetBrains Mono',ui-monospace,monospace;white-space:pre;overflow:auto;padding:8px}
-.ascii-actions{display:flex;gap:6px;margin:6px 0}
-/* ===== Context menu (right click) ===== */
-  .ctx{position:absolute; background:#fff; border:1px solid #000; box-shadow:4px 4px 0 #0003; min-width:160px; display:none; flex-direction:column; z-index:var(--z-menu)}
+  /* Context menu */
+  .ctx{position:absolute; background:#fff; border:1px solid #000; box-shadow:4px 4px 0 #0003; min-width:180px; display:none; flex-direction:column; z-index:var(--z-menu)}
+  .ctx[hidden]{display:none !important}
   .ctx button{appearance:none; border:0; background:#fff; text-align:left; padding:6px 10px; font:13px Tahoma}
   .ctx button:hover{background:#cce5ff}
-
-  /* A11y helpers */
-  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
 <body>
 <div class="desktop" role="application" aria-label="Windows 98 desktop">
   <div class="icons" id="desktopIcons" aria-label="Desktop icons">
-    <!-- Icons will be positioned via data-x/y; change labels or add more as needed -->
-    <button class="icon" data-app="about" style="left:14px;top:14px" aria-label="Open About">
-      <div class="glyph" aria-hidden="true">💾</div>
+    <button class="icon" data-app="projects" data-side="left" aria-label="Open My Projects" tabindex="0">
+      <div class="glyph folder" aria-hidden="true"></div>
+      <span class="label">My Projects</span>
+    </button>
+    <button class="icon" data-app="resume" data-side="left" aria-label="Open Resume.txt" tabindex="0">
+      <div class="glyph file" aria-hidden="true"></div>
+      <span class="label">Resume.txt</span>
+    </button>
+    <button class="icon" data-app="about" data-side="left" aria-label="Open About" tabindex="0">
+      <div class="glyph folder" aria-hidden="true"></div>
       <span class="label">About Me</span>
     </button>
-    <button class="icon" data-app="work" style="left:14px;top:120px" aria-label="Open Work">
+    <button class="icon" data-app="internet" data-side="left" aria-label="Open Internet" tabindex="0">
+      <div class="glyph ie" aria-hidden="true"><img src="internet.svg" alt="" /></div>
+      <span class="label">Internet</span>
+    </button>
+    <button class="icon" data-app="contact" data-side="left" aria-label="Open Contact" tabindex="0">
       <div class="glyph folder" aria-hidden="true"></div>
-      <span class="label">Client Work</span>
-    </button>
-    <button class="icon" data-app="projects" style="left:14px;top:226px" aria-label="Open Projects">
-      <div class="glyph" aria-hidden="true">🕹️</div>
-      <span class="label">Games & Apps</span>
-    </button>
-    <button class="icon" data-app="contact" style="left:14px;top:332px" aria-label="Open Contact">
-      <div class="glyph" aria-hidden="true">📧</div>
       <span class="label">Contact</span>
     </button>
-    <button class="icon" data-app="sites" style="left:14px;top:438px" aria-label="Open Sites">
-      <div class="glyph" aria-hidden="true">🌐</div>
-      <span class="label">Sites</span>
-    </button>
-    <button class="icon" data-app="kommando" style="left:14px;top:544px" aria-label="Open KOMMANDO">
-      <div class="glyph folder" aria-hidden="true"></div>
+    <button class="icon" data-app="kommando" data-side="right" aria-label="Open KOMMANDO" tabindex="0">
+      <div class="glyph game" aria-hidden="true"><img src="kommando.svg" alt="" /></div>
       <span class="label">KOMMANDO</span>
     </button>
   </div>
 
-  <!-- Windows will be injected here -->
-
-  <!-- Context menu -->
-  <div class="ctx" id="ctxMenu" role="menu">
-    <button data-cmd="new">New…</button>
+  <!-- Right-click context menu -->
+  <div class="ctx" id="ctxMenu" role="menu" hidden>
     <button data-cmd="arrange">Auto Arrange Icons</button>
     <button data-cmd="theme">Toggle Theme Color</button>
+    <button data-cmd="pro">Toggle Professional Mode</button>
+    <hr style="border:0;border-top:1px solid #ddd;margin:4px 0">
+    <button data-cmd="cascade">Cascade Windows</button>
+    <button data-cmd="tile">Tile Windows</button>
+    <button data-cmd="closeAll">Close All Windows</button>
   </div>
+
+  <!-- Start Menu -->
+  <nav class="startmenu" id="startMenu" aria-label="Start Menu" hidden>
+    <div class="brand">Pedro Pita</div>
+    <div class="item" data-open="about">💬 About</div>
+    <div class="item" data-open="projects">🗂️ Projects</div>
+    <div class="item" data-open="resume">📄 Resume.txt</div>
+    <div class="item" data-open="internet">🌐 Internet</div>
+    <div class="item" data-open="contact">📧 Contact</div>
+    <div class="item" data-open="kommando">🎮 KOMMANDO</div>
+  </nav>
 
   <!-- Taskbar -->
   <div class="taskbar" aria-label="Taskbar">
@@ -147,56 +175,23 @@
   </div>
 </div>
 
-<!-- ===== App Content Templates (lifted from your portfolio) ===== -->
+<!-- ===== Templates ===== -->
 <template id="tpl-about">
   <section>
-    <h2>About</h2>
-    <div class="stack" aria-label="Core skills">
-      <span>JavaScript</span><span>React</span><span>Next.js</span><span>TypeScript</span><span>Tailwind</span><span>Vercel</span><span>Node</span>
-    </div>
-    <p>I design and ship lean, high-performance web products—accessible, fast, and easy to maintain. From content models to APIs and deployment, I keep the stack invisible and the outcome clear.</p>
+    <h2>About Me</h2>
     <div class="grid">
       <article class="card">
-        <h3>What I’m good at</h3>
-        <p>Front‑end feature work, performant layouts, API integrations, and tidy content systems.</p>
+        <h3>Who I am</h3>
+        <p>Lisbon-based web developer shipping clean, production web work. Past life in video, sound, and data—now building quiet, fast interfaces and the systems behind them.</p>
+        <div class="stack"><span>JavaScript</span><span>React</span><span>Next.js</span><span>TypeScript</span><span>Tailwind</span><span>Node</span></div>
       </article>
       <article class="card">
-        <h3>Availability</h3>
-        <p>Open to front‑end/full‑stack roles and selected client work.</p>
-        <p><a class="btn" href="mailto:hello@pedropita.dev">Email</a> <a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">LinkedIn</a></p>
-      </article>
-    </div>
-  </section>
-</template>
-
-<template id="tpl-work">
-  <section>
-    <h2>Selected Client Work</h2>
-    <div class="stack"><span>Next.js</span><span>React</span><span>Tailwind</span><span>Vercel</span><span>Figma</span><span>REST</span></div>
-    <div class="grid">
-      <article class="card">
-        <div class="thumb">Mojobyte</div>
-        <h3>Mojobyte — Web Dev Company</h3>
-        <p>Clear service pages and pricing. SEO‑ready, fast, easy to maintain.</p>
-        <p><a class="btn" href="https://mojobyte.com" target="_blank" rel="noopener">Visit</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">Iron Signal Works</div>
-        <h3>Iron Signal Works — Indie Game Studio</h3>
-        <p>Lean studio site with media embeds and simple publishing flow.</p>
-        <p><a class="btn" href="https://ironsignalworks.com" target="_blank" rel="noopener">Visit</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">NovaScript AI</div>
-        <h3>NovaScript AI — Corporate Website</h3>
-        <p>Direct copy, clean IA, and sensible on‑page SEO.</p>
-        <p><a class="btn" href="https://novascript.eu" target="_blank" rel="noopener">Visit</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">Gamma Threads</div>
-        <h3>Gamma Threads — Clothing + Game</h3>
-        <p>Brand page with embedded mini‑game and simple merch pipeline.</p>
-        <p><a class="btn" href="https://gamma-threads.com" target="_blank" rel="noopener">Visit</a></p>
+        <h3>System Properties</h3>
+        <div class="mono">Processor: Human (Full Stack)
+RAM: 8 hours sleep
+GPU: Coffee v2.0
+OS: Lisbon (Remote OK)
+        </div>
       </article>
     </div>
   </section>
@@ -204,46 +199,39 @@
 
 <template id="tpl-projects">
   <section>
-    <h2>Selected Games & Apps</h2>
-    <h3>Games</h3>
+    <h2>My Projects</h2>
     <div class="grid">
-      <article class="card">
-        <div class="thumb">Jungle Siege</div>
-        <h3>Jungle Siege (in progress)</h3>
-        <p>Top‑down action with custom HUD, bosses, cinematic intros.</p>
-        <p><a class="btn" href="https://ironsignalworks.com/games/jungle-siege" target="_blank" rel="noopener">Prototype</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">Reaktor 404</div>
-        <h3>Reaktor 404</h3>
-        <p>Tiny arcade embed for the apparel site.</p>
-        <p><a class="btn" href="https://ironsignalworks.com/games/reaktor-404" target="_blank" rel="noopener">Play</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">Spam Invaders</div>
-        <h3>Spam Invaders</h3>
-        <p>Win98‑flavored Space Invaders—just for fun.</p>
-        <p><a class="btn" href="https://ironsignalworks.com/games/spaminvaders" target="_blank" rel="noopener">Play</a></p>
-      </article>
-      <article class="card">
-        <div class="thumb">Depthcharge</div>
-        <h3>Depthcharge</h3>
-        <p>Minimalist naval arcade—tight loop, crunchy feedback.</p>
-        <p><a class="btn" href="https://ironsignalworks.com/games/depthcharge" target="_blank" rel="noopener">Play</a></p>
-      </article>
+      <article class="card"><div class="thumb">Jungle Siege</div><h3>Jungle Siege</h3><p>Top-down action with custom HUD, bosses, cinematic intros.</p><p><a class="btn" href="https://ironsignalworks.com/games/jungle-siege" target="_blank" rel="noopener">Prototype</a></p></article>
+      <article class="card"><div class="thumb">Reaktor 404</div><h3>Reaktor 404</h3><p>Arcade mini game for apparel site.</p><p><a class="btn" href="https://ironsignalworks.com/games/reaktor-404" target="_blank" rel="noopener">Play</a></p></article>
+      <article class="card"><div class="thumb">Spam Invaders</div><h3>Spam Invaders</h3><p>Win98-flavored Space Invaders—just for fun.</p><p><a class="btn" href="https://ironsignalworks.com/games/spaminvaders" target="_blank" rel="noopener">Play</a></p></article>
+      <article class="card"><div class="thumb">Depthcharge</div><h3>Depthcharge</h3><p>Minimalist naval arcade—tight loop, crunchy feedback.</p><p><a class="btn" href="https://ironsignalworks.com/games/depthcharge" target="_blank" rel="noopener">Play</a></p></article>
     </div>
-    <h3>Apps</h3>
-    <div class="grid">
-      <article class="card">
-        <div class="thumb">Radiofry</div>
-        <h3>Radiofry — DAW</h3>
-        <p>Browser DAW experiments with offline render flow.</p>
-      </article>
-      <article class="card">
-        <div class="thumb">AI Assistant</div>
-        <h3>AI Assistant (in prod)</h3>
-        <p>Internal assistant with tools and memory.</p>
-      </article>
+  </section>
+</template>
+
+<template id="tpl-resume">
+  <section>
+    <h2>Resume.txt</h2>
+    <p><a class="btn" href="/resume.pdf" target="_blank" rel="noopener">Download PDF</a></p>
+    <pre class="mono">Pedro Pita — Web Developer & Creative Technologist
+Lisbon, PT — Remote OK
+
+Skills: JavaScript, React/Next.js, Node, REST, SQL, A11y, SEO, Performance
+Experience: Client sites (Mojobyte), games (Iron Signal Works), tools (NovaScript)
+Links: github.com/ironsignalworks · linkedin.com/in/pedropita · hello@pedropita.dev
+    </pre>
+  </section>
+</template>
+
+<template id="tpl-internet">
+  <section>
+    <h2>Internet Explorer</h2>
+    <div id="ie-loading" class="card"><strong>Loading...</strong><div id="ie-bar" style="height:8px;background:#95b8ff;width:0%"></div></div>
+    <div class="grid" id="ie-links" style="display:none">
+      <article class="card"><h3>GitHub</h3><p><a class="btn" href="https://github.com/ironsignalworks" target="_blank" rel="noopener">Open</a></p></article>
+      <article class="card"><h3>LinkedIn</h3><p><a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">Open</a></p></article>
+      <article class="card"><h3>CodePen</h3><p><a class="btn" href="https://codepen.io/" target="_blank" rel="noopener">Open</a></p></article>
+      <article class="card"><h3>Website</h3><p><a class="btn" href="https://pedropita.dev" target="_blank" rel="noopener">Open</a></p></article>
     </div>
   </section>
 </template>
@@ -251,51 +239,59 @@
 <template id="tpl-contact">
   <section>
     <h2>Contact</h2>
-    <p>Best way to reach me: <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>. I reply fast.</p>
-    <p>
-      <a class="btn" href="mailto:hello@pedropita.dev">Email</a>
-      <a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">LinkedIn</a>
-      <a class="btn" href="https://github.com/ironsignalworks" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn" href="https://mojobyte.com" target="_blank" rel="noopener">Mojobyte</a>
-      <a class="btn" href="https://ironsignalworks.com" target="_blank" rel="noopener">ISW</a>
-    </p>
-  </section>
-</template>
-
-<template id="tpl-sites">
-  <section>
-    <h2>Sites</h2>
-    <ul>
-      <li><a href="https://pedropita.dev" target="_blank" rel="noopener">pedropita.dev</a></li>
-      <li><a href="https://ironsignalworks.com" target="_blank" rel="noopener">ironsignalworks.com</a></li>
-      <li><a href="https://mojobyte.com" target="_blank" rel="noopener">mojobyte.com</a></li>
-      <li><a href="https://gamma-threads.com" target="_blank" rel="noopener">gamma-threads.com</a></li>
-      <li><a href="https://novascript.eu" target="_blank" rel="noopener">novascript.eu</a></li>
-      <li><a href="https://deadgravel.com" target="_blank" rel="noopener">deadgravel.com</a></li>
-    </ul>
+    <div role="dialog" aria-label="Send Message" class="dlg">
+      <label>Name<br><input style="width:100%" /></label><br><br>
+      <label>Email<br><input type="email" style="width:100%" /></label><br><br>
+      <label>Message<br><textarea rows="5" style="width:100%"></textarea></label>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" onclick="alert('Message sent (demo).')">OK</button>
+        <button class="btn" onclick="this.closest('.dlg').querySelectorAll('input,textarea').forEach(e=>e.value='')">Cancel</button>
+      </div>
+    </div>
   </section>
 </template>
 
 <template id="tpl-kommando">
   <section>
     <h2>KOMMANDO</h2>
-    <p>Drop your game build here later. For now this is a placeholder window with a mount point.</p>
-    <div id="kommando-mount" style="height:50vh;min-height:260px;border:1px dashed #888;background:#111;color:#9ef;padding:8px;display:grid;place-items:center;">
-      <div>
-        <p style="margin:0 0 6px;font-weight:600">/games/kommando — placeholder</p>
-        <p style="margin:0">When ready, replace this with your canvas/app iframe or injected script.</p>
-      </div>
-    </div>
+    <p>Playable inline demo below; swap with your real build anytime.</p>
+    <canvas id="kommando-canvas" width="640" height="360" style="width:100%;max-width:820px;border:1px solid #333;background:#000;display:block"></canvas>
+    <p class="mono">Controls: ← → move • ▲/W jump • SPACE fire • P pause</p>
   </section>
 </template>
+
+<template id="tpl-note">
+  <section>
+    <h2>Untitled — Notepad</h2>
+    <textarea style="width:100%;height:46vh;font:13px/1.4 JetBrains Mono,monospace;"></textarea>
+  </section>
+</template>
+
+<template id="tpl-aboutdlg">
+  <section class="mono">
+    <strong>Win98 Desktop Portfolio</strong>
+    <div>Vanilla JS · Draggable/Resizable Windows · Start Menu · Taskbar</div>
+    <div>© Pedro Pita</div>
+  </section>
+</template>
+
 <script>
 (function(){
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const desktop = document.body;
+  // fail-safe: surface errors if something breaks early
+  window.addEventListener('error', e => console.error('Desktop error:', e.message, e.filename, e.lineno));
+
+  const $ = (s,root=document)=>root.querySelector(s);
+  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+  const desktop = $('.desktop');
   const tasklist = $('#tasklist');
   const clock = $('#clock');
   const ctxMenu = $('#ctxMenu');
+  const startBtn = $('#startBtn');
+  const startMenu = $('#startMenu');
+
+  const ICON_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--icon-w'))||120;
+  const ROW_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rowH'))||132;
+  const PAD = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pad'))||16;
 
   // Clock
   const fmt = v => String(v).padStart(2,'0');
@@ -305,29 +301,48 @@
   // Z layering
   let zTop = 2000; const raise = el => { zTop+=2; el.style.zIndex = zTop; $$('.win').forEach(w=>w.classList.toggle('inactive', w!==el)); };
 
-  // Drag helper (titlebar + icons)
+  // Drag helper
   function drag(el, startEv, onMove){
+    if(startEv.target.closest?.('.ctl')) return;
     startEv.preventDefault();
     const rect = el.getBoundingClientRect();
-    const ox = (startEv.clientX||startEv.touches?.[0].clientX) - rect.left;
-    const oy = (startEv.clientY||startEv.touches?.[0].clientY) - rect.top;
-    const onpointermove = (ev)=>{
-      const x = (ev.clientX||ev.touches?.[0].clientX) - ox;
-      const y = (ev.clientY||ev.touches?.[0].clientY) - oy;
-      onMove(x,y,ev);
+    const ox = (startEv.clientX ?? startEv.touches?.[0]?.clientX ?? 0) - rect.left;
+    const oy = (startEv.clientY ?? startEv.touches?.[0]?.clientY ?? 0) - rect.top;
+    const move = (ev)=>{
+      const cx = (ev.clientX ?? ev.touches?.[0]?.clientX ?? 0) - ox;
+      const cy = (ev.clientY ?? ev.touches?.[0]?.clientY ?? 0) - oy;
+      onMove(cx, cy, ev);
     };
-    const stop = ()=>{ window.removeEventListener('pointermove',onpointermove); window.removeEventListener('pointerup',stop); window.removeEventListener('touchmove',onpointermove); window.removeEventListener('touchend',stop); };
-    window.addEventListener('pointermove',onpointermove); window.addEventListener('pointerup',stop);
-    window.addEventListener('touchmove',onpointermove,{passive:false}); window.addEventListener('touchend',stop);
+    const up = ()=>{
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',up);
+      window.removeEventListener('touchmove',move);
+      window.removeEventListener('touchend',up);
+    };
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',up);
+    window.addEventListener('touchmove',move,{passive:false});
+    window.addEventListener('touchend',up);
   }
 
-  // Create a window
-  function openApp(id, title){
-    // If exists, focus
-    const existing = $(`.win[data-app="${id}"]`);
-    if(existing){ raise(existing); existing.style.display='flex'; activateTask(existing); return existing; }
+  // Open map (title, template id)
+  const openMap = {
+    projects:['My Projects','projects'],
+    resume:['Resume.txt','resume'],
+    about:['About Me','about'],
+    internet:['Internet Explorer','internet'],
+    contact:['Contact','contact'],
+    kommando:['KOMMANDO','kommando'],
+    note:['Notepad','note']
+  };
 
-    const tpl = $(`#tpl-${id}`); if(!tpl){ alert('Missing template for '+id); return; }
+  // Windows
+  function openApp(id, title){
+    toggleStart(false); hideCtx();
+    const existing = document.querySelector(`.win[data-app="${id}"]`);
+    if(existing){ raise(existing); existing.style.display='flex'; activateTask(existing); setStatus(existing,'Ready'); return existing; }
+
+    const tpl = document.querySelector(`#tpl-${id}`); if(!tpl){ alert('Missing template for '+id); return; }
     const win = document.createElement('section');
     win.className = 'win';
     win.dataset.app = id;
@@ -340,70 +355,139 @@
         <div class="ctl">
           <button class="btn3d" data-act="min" title="Minimize" aria-label="Minimize">_</button>
           <button class="btn3d" data-act="max" title="Maximize" aria-label="Maximize">▢</button>
+          <button class="btn3d" data-act="fs"  title="Fullscreen" aria-label="Fullscreen">⛶</button>
           <button class="btn3d" data-act="close" title="Close" aria-label="Close">✕</button>
         </div>
       </div>
       <div class="menubar" role="menubar">
-        <div class="menuitem" role="menuitem">File</div>
-        <div class="menuitem" role="menuitem">Edit</div>
-        <div class="menuitem" role="menuitem">View</div>
-        <div class="menuitem" role="menuitem">Help</div>
+        <div class="menuitem" data-menu="file" tabindex="0" aria-expanded="false">File
+          <div class="menu-drop">
+            <button data-mi="new-note">New Note</button>
+            <button data-mi="close">Close</button>
+          </div>
+        </div>
+        <div class="menuitem" data-menu="view" tabindex="0" aria-expanded="false">View
+          <div class="menu-drop">
+            <button data-mi="theme">Toggle Theme</button>
+            <button data-mi="status">Blink Status</button>
+          </div>
+        </div>
+        <div class="menuitem" data-menu="help" tabindex="0" aria-expanded="false">Help
+          <div class="menu-drop">
+            <button data-mi="about">About</button>
+            <button data-mi="keys">Keyboard Shortcuts</button>
+          </div>
+        </div>
       </div>
       <div class="content" role="document"></div>
       <div class="statusbar" role="status">Ready</div>
+      <div class="grip" title="Resize"></div>
     `;
 
-    document.querySelector('.desktop').appendChild(win);
+    desktop.appendChild(win);
     const content = win.querySelector('.content');
     content.appendChild(tpl.content.cloneNode(true));
     raise(win);
 
-    // Drag by titlebar
+    // Fullscreen fallback to maximize if blocked
+    const fsBtn = win.querySelector('[data-act="fs"]');
+    const canFS = !!(document.fullscreenEnabled && win.requestFullscreen);
+    if(!canFS){ fsBtn.dataset.act = 'max'; fsBtn.textContent = '▢'; fsBtn.title = 'Maximize'; fsBtn.setAttribute('aria-label','Maximize'); }
+
+    // Specials
+    if(id==='internet'){ fakeInternetLoad(content); }
+    if(id==='kommando'){ initKommando(content.querySelector('#kommando-canvas')); }
+
+    // Drag by titlebar + dblclick maximize
     const tb = win.querySelector('.titlebar');
     tb.addEventListener('pointerdown', ev=> drag(win, ev, (x,y)=>{
       const maxX = innerWidth - win.offsetWidth - 2; const maxY = innerHeight - win.offsetHeight - 34;
       win.style.left = Math.max(0, Math.min(maxX, x)) + 'px';
       win.style.top = Math.max(0, Math.min(maxY, y)) + 'px';
     }));
+    tb.addEventListener('dblclick', ()=> toggleMax(win));
+
+    // Resize grip
+    const grip = win.querySelector('.grip');
+    grip.addEventListener('pointerdown', ev=>{
+      ev.preventDefault(); raise(win);
+      const start = win.getBoundingClientRect();
+      const sx = ev.clientX, sy = ev.clientY;
+      const move = (e)=>{
+        const dx = (e.clientX - sx); const dy = (e.clientY - sy);
+        const w = Math.max(360, start.width + dx);
+        const h = Math.max(220, start.height + dy);
+        win.style.width = w + 'px';
+        win.style.height = h + 'px';
+      };
+      const up = ()=>{
+        window.removeEventListener('pointermove',move);
+        window.removeEventListener('pointerup',up);
+      };
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
+    });
+
+    // Menus
+    hookMenus(win);
 
     // Controls
     win.addEventListener('click', (e)=>{
-      const act = e.target.closest('.btn3d')?.dataset.act;
-      if(!act) return;
-      if(act==='close'){ closeWin(win); }
-      if(act==='min'){ minimizeWin(win); }
-      if(act==='max'){ toggleMax(win); }
+      const btn = e.target.closest('.btn3d'); if(!btn) return;
+      e.stopPropagation();
+      const act = btn.dataset.act;
+      if(act==='close') closeWin(win);
+      else if(act==='min') minimizeWin(win);
+      else if(act==='max') toggleMax(win);
+      else if(act==='fs') toggleFullscreen(win);
     });
 
-    // Focus on click
+    // Focus
     win.addEventListener('mousedown', ()=> raise(win));
 
     // Task button
     addTaskButton(win, title);
+    setStatus(win,'Opened');
     return win;
   }
 
+  function setStatus(win, text){
+    const s = win.querySelector('.statusbar'); if(s) s.textContent = text;
+  }
   function closeWin(win){
-    const id = win.dataset.app; const task = $(`.task[data-app="${id}"]`); if(task) task.remove();
+    const id = win.dataset.app; const task = document.querySelector(`.task[data-app="${id}"]`); if(task) task.remove();
     win.remove();
   }
   function minimizeWin(win){
-    const id = win.dataset.app; const task = $(`.task[data-app="${id}"]`);
+    const id = win.dataset.app; const task = document.querySelector(`.task[data-app="${id}"]`);
     win.style.display = 'none'; if(task) task.classList.remove('active');
   }
   function toggleMax(win){
     if(win.dataset.max!=='1'){
       win.dataset.prev = JSON.stringify({left:win.style.left, top:win.style.top, w:win.style.width, h:win.style.height});
       win.style.left = '0px'; win.style.top='0px'; win.style.width = (innerWidth-2)+'px'; win.style.height = (innerHeight-34)+'px';
-      win.dataset.max='1';
+      win.dataset.max='1'; setStatus(win,'Maximized');
     }else{
       const p = JSON.parse(win.dataset.prev||'{}');
       win.style.left = p.left||'120px'; win.style.top = p.top||'60px';
       win.style.width = p.w||'min(880px,88vw)'; win.style.height = p.h||'';
       delete win.dataset.max; delete win.dataset.prev;
+      setStatus(win,'Restored');
     }
   }
-
+  function toggleFullscreen(win){
+    const el = win;
+    const canFS = !!(document.fullscreenEnabled && el.requestFullscreen);
+    if(!canFS){ toggleMax(win); return; }
+    try{
+      if(document.fullscreenElement === el){
+        if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+      }else{
+        const p = el.requestFullscreen({ navigationUI: 'hide' });
+        if(p && typeof p.catch === 'function') p.catch(()=> toggleMax(win));
+      }
+    }catch(err){ toggleMax(win); }
+  }
   function addTaskButton(win, title){
     const id = win.dataset.app;
     const btn = document.createElement('button');
@@ -411,8 +495,7 @@
     btn.innerHTML = `🪟 <span>${title}</span>`;
     tasklist.appendChild(btn);
     btn.addEventListener('click', ()=>{
-      const visible = win.style.display !== 'none';
-      if(!visible){ win.style.display='flex'; }
+      if(win.style.display==='none'){ win.style.display='flex'; setStatus(win,'Restored'); }
       raise(win); activateTask(win);
     });
     activateTask(win);
@@ -421,63 +504,223 @@
     const id = win.dataset.app; $$('.task').forEach(t=>t.classList.toggle('active', t.dataset.app===id));
   }
 
-  // Desktop icons: double‑click to open + draggable
-  const openMap = {
-    about:['About Me','about'],
-    work:['Client Work','work'],
-    projects:['Games & Apps','projects'],
-    contact:['Contact','contact'],
-    sites:['Sites','sites'],
-    kommando:['KOMMANDO','kommando']
-  };
-
+  // Icons open with double-click or Enter
   $('#desktopIcons').addEventListener('dblclick', (e)=>{
     const ic = e.target.closest('.icon'); if(!ic) return;
-    const app = ic.dataset.app; const [title,id] = openMap[app]||[app,app];
+    const [title,id] = openMap[ic.dataset.app]||[ic.dataset.app,ic.dataset.app];
     openApp(id, title);
   });
+  $('#desktopIcons').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){
+      const ic = e.target.closest('.icon'); if(!ic) return;
+      const [title,id] = openMap[ic.dataset.app]||[ic.dataset.app,ic.dataset.app];
+      openApp(id, title);
+    }
+  });
 
-  // Make icons draggable
-  $$('.icon').forEach(ic=>{
+  // Icons draggable (column-locked, grid-snapped)
+  function lockIcon(ic){
     ic.addEventListener('pointerdown', ev=>{
-      drag(ic, ev, (x,y)=>{ ic.style.left=Math.max(4,Math.min(innerWidth-96,x))+'px'; ic.style.top=Math.max(4,Math.min(innerHeight-96-34,y))+'px'; });
+      const side = ic.dataset.side||'left';
+      const colLeft = side==='left' ? PAD : (innerWidth - PAD - ICON_W);
+      drag(ic, ev, (x,y)=>{
+        const snappedY = Math.max(PAD, Math.min(innerHeight-ROW_H-34, Math.round((y-PAD)/ROW_H)*ROW_H + PAD));
+        ic.style.left = colLeft + 'px';
+        ic.style.top = snappedY + 'px';
+      });
     });
-  });
+  }
+  $$('.icon').forEach(lockIcon);
 
-  // Right‑click context menu
-  desktop.addEventListener('contextmenu', (e)=>{
-    e.preventDefault();
-    ctxMenu.style.display='flex'; ctxMenu.style.left=e.clientX+'px'; ctxMenu.style.top=e.clientY+'px';
+  // Start Button + Menu (explicit style.display control so show/hide works)
+  function toggleStart(force){
+    const show = (force!==undefined) ? force : (startMenu.style.display==='none' || startMenu.hasAttribute('hidden'));
+    if(show){ startMenu.style.display='flex'; startMenu.removeAttribute('hidden'); }
+    else { startMenu.style.display='none'; startMenu.setAttribute('hidden',''); }
+    startBtn.setAttribute('aria-expanded', show?'true':'false');
+  }
+  toggleStart(false);
+  startBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleStart(); });
+  window.addEventListener('click', ()=>{ toggleStart(false); hideCtx(); closeAllMenuDrops(); });
+  $('#startMenu').addEventListener('click', (e)=>{ const id=e.target.getAttribute('data-open'); if(!id) return; const [title,app]=openMap[id]; openApp(app,title); toggleStart(false); });
+
+  // Menus inside each window
+  function hookMenus(win){
+    const items = $$('.menuitem', win);
+    items.forEach(mi=>{
+      const drop = $('.menu-drop', mi);
+      mi.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const open = mi.getAttribute('aria-expanded')==='true';
+        closeAllMenuDrops();
+        if(!open){ mi.setAttribute('aria-expanded','true'); if(drop) drop.style.display='block'; }
+      });
+      drop?.addEventListener('click', (e)=>{
+        const action = e.target?.dataset?.mi; if(!action) return;
+        if(action==='close'){ closeWin(win); }
+        if(action==='new-note'){ openApp('note','Notepad'); }
+        if(action==='theme'){ toggleTheme(); }
+        if(action==='status'){ setStatus(win,'Working…'); setTimeout(()=>setStatus(win,'Ready'),900); }
+        if(action==='about'){ openDialog('About', $('#tpl-aboutdlg').content.cloneNode(true)); }
+        if(action==='keys'){ alert('Shortcuts:\n\nESC = Close active window\nF11 = Fullscreen active window\nDouble-click titlebar = Max/Restore'); }
+      });
+    });
+  }
+  function closeAllMenuDrops(){ $$('.menuitem').forEach(mi=>{ mi.setAttribute('aria-expanded','false'); const d=$('.menu-drop',mi); if(d) d.style.display='none'; }); }
+
+  function openDialog(title, node){
+    const id = 'dlg-'+Math.random().toString(36).slice(2,7);
+    const win = openApp(id, title);
+    const content = win.querySelector('.content'); content.innerHTML=''; content.appendChild(node);
+    return win;
+  }
+
+  // Context menu
+  function hideCtx(){ ctxMenu.setAttribute('hidden',''); ctxMenu.style.display='none'; }
+  document.body.addEventListener('contextmenu', (e)=>{
+    e.preventDefault(); ctxMenu.removeAttribute('hidden'); ctxMenu.style.display='flex';
+    ctxMenu.style.left=e.clientX+'px'; ctxMenu.style.top=e.clientY+'px';
   });
-  window.addEventListener('click', ()=> ctxMenu.style.display='none');
   ctxMenu.addEventListener('click', (e)=>{
     const cmd = e.target.dataset.cmd; if(!cmd) return;
-    if(cmd==='arrange'){ autoArrange(); }
-    if(cmd==='theme'){ toggleTheme(); }
-    if(cmd==='new'){ alert('😉 Coming soon: New → Shortcut / Folder / Text Document'); }
+    if(cmd==='arrange') autoArrange();
+    if(cmd==='theme') toggleTheme();
+    if(cmd==='pro') togglePro();
+    if(cmd==='cascade') cascadeWindows();
+    if(cmd==='tile') tileWindows();
+    if(cmd==='closeAll') closeAllWindows();
+    hideCtx();
   });
 
   function autoArrange(){
-    const pad=12, colW=96, rowH=106; let col=0,row=0; const maxRows=Math.floor((innerHeight-34-20)/rowH);
-    $$('.icon').forEach(ic=>{ ic.style.left=(pad+col*colW)+'px'; ic.style.top=(pad+row*rowH)+'px'; row++; if(row>=maxRows){ row=0; col++; } });
+    const leftCol = PAD; const rightCol = innerWidth - PAD - ICON_W;
+    let y = PAD; $$('.icon[data-side="left"]').forEach(ic=>{ ic.style.left=leftCol+'px'; ic.style.top=y+'px'; y+=ROW_H; });
+    let ry = PAD; $$('.icon[data-side="right"]').forEach(ic=>{ ic.style.left=rightCol+'px'; ic.style.top=ry+'px'; ry+=ROW_H; });
   }
   function toggleTheme(){
     const teal = getComputedStyle(document.documentElement).getPropertyValue('--desk-green').trim();
     document.documentElement.style.setProperty('--desk-green', teal==='#008080' ? '#004a7f' : '#008080');
   }
+  function togglePro(){ document.body.classList.toggle('pro'); }
+  function cascadeWindows(){
+    let x=20, y=20;
+    $$('.win').forEach(w=>{ w.style.left = x+'px'; w.style.top = y+'px'; x+=24; y+=24; raise(w); });
+  }
+  function tileWindows(){
+    const wins = $$('.win'); if(!wins.length) return;
+    const cols = Math.ceil(Math.sqrt(wins.length));
+    const rows = Math.ceil(wins.length / cols);
+    const pad = 6;
+    const w = Math.floor((innerWidth - pad*(cols+1))/cols);
+    const h = Math.floor((innerHeight - 34 - pad*(rows+1))/rows);
+    wins.forEach((win,i)=>{
+      const c = i % cols; const r = Math.floor(i/cols);
+      win.style.left = (pad + c*(w+pad))+'px';
+      win.style.top = (pad + r*(h+pad))+'px';
+      win.style.width = w+'px'; win.style.height = h+'px';
+      raise(win);
+    });
+  }
+  function closeAllWindows(){ $$('.win').forEach(closeWin); }
 
-  // Start button (for fun, toggles About)
-  $('#startBtn').addEventListener('click', ()=>{
-    openApp('about','About Me');
+  // Keyboard shortcuts: ESC close top window, F11 FS/max
+  window.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape'){
+      const top = getTopWindow(); if(top){ closeWin(top); e.preventDefault(); }
+      toggleStart(false); hideCtx(); closeAllMenuDrops();
+    }
+    if(e.key==='F11'){
+      const top = getTopWindow(); if(top){ toggleFullscreen(top); e.preventDefault(); }
+    }
   });
+  function getTopWindow(){
+    let top=null, topZ=-1;
+    $$('.win').forEach(w=>{ const z = parseInt(w.style.zIndex||'0',10); if(z>topZ){ topZ=z; top=w; }});
+    return top;
+  }
 
-  // Keyboard: Enter/Space activates focused icon
-  $('#desktopIcons').addEventListener('keydown', (e)=>{
-    if(e.key==='Enter' || e.key===' '){ const ic=document.activeElement.closest('.icon'); if(ic){ const [title,id]=openMap[ic.dataset.app]||[ic.dataset.app,ic.dataset.app]; openApp(id,title); } }
-  });
+  // Arrange icons at boot; open nothing by default
+  autoArrange();
 
-  // First focus to first icon for a11y
-  const firstIcon = $('.icon'); if(firstIcon) firstIcon.focus();
+  // Fake IE loader
+  function fakeInternetLoad(root){
+    const bar = root.querySelector('#ie-bar'); const box = root.querySelector('#ie-loading'); const links = root.querySelector('#ie-links'); let p=0;
+    const t = setInterval(()=>{ p = Math.min(100, p+5); bar.style.width=p+'%'; if(p>=100){ clearInterval(t); box.style.display='none'; links.style.display='grid'; } }, 60);
+  }
+
+  /* ===== KOMMANDO Mini-Demo (inline canvas) ===== */
+  function initKommando(canvas){
+    if(!canvas || canvas.__booted) return; canvas.__booted = true;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    let then = 0, paused = false;
+    const keys = new Set();
+    const player = {x:80, y:H-40, vx:0, vy:0, w:18, h:24, onGround:true, color:'#0f0', hp:3, cd:0};
+    const bullets = []; const foes = [];
+    let spawn=0, score=0;
+
+    function rect(r, c){ ctx.fillStyle=c; ctx.fillRect(r.x, r.y, r.w, r.h); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+    function spawnFoe(){ const y=H-40; foes.push({x:W+20, y, w:18, h:22, vx:- (1.2+Math.random()*1.5), hp:1}); }
+    function fire(){ if(player.cd>0) return; bullets.push({x:player.x+player.w, y:player.y+player.h/2-2, vx:5, w:8, h:4}); player.cd=10; }
+
+    function update(dt){
+      if(paused) return;
+      player.vx = (keys.has('ArrowRight')||keys.has('d'))? 2.1 : (keys.has('ArrowLeft')||keys.has('a'))? -2.1 : 0;
+      if((keys.has('ArrowUp')||keys.has('w')) && player.onGround){ player.vy=-5.4; player.onGround=false; }
+      if(keys.has(' ') ) fire();
+      if(player.cd>0) player.cd -= 1;
+
+      player.vy += 0.22; // gravity
+      player.x += player.vx; player.y += player.vy;
+      if(player.y+player.h>=H-16){ player.y=H-16-player.h; player.vy=0; player.onGround=true; }
+      player.x = clamp(player.x, 0, W-player.w);
+
+      bullets.forEach(b=>{ b.x += b.vx; });
+      while(bullets.length && bullets[0].x>W+40) bullets.shift();
+
+      if(spawn<=0){ spawn = 60+Math.random()*60; spawnFoe(); } else spawn -= dt*60/16;
+      foes.forEach(f=>{ f.x += f.vx; });
+      while(foes.length && foes[0].x<-40) { foes.shift(); score=Math.max(0,score-1); }
+
+      // collisions
+      for(let fi=foes.length-1; fi>=0; fi--){
+        const f = foes[fi];
+        for(let bi=bullets.length-1; bi>=0; bi--){
+          const b = bullets[bi];
+          if(b.x<b.w+f.x && b.x+b.w>f.x && b.y<b.h+f.y && b.y+b.h>f.y){ foes.splice(fi,1); bullets.splice(bi,1); score+=5; break; }
+        }
+        if(player.x<player.w+f.x && player.x+player.w>f.x && player.y<player.h+f.y && player.y+player.h>f.y){
+          foes.splice(fi,1); player.hp-=1; score=Math.max(0,score-5);
+        }
+      }
+    }
+
+    function draw(){
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#222'; ctx.fillRect(0,H-16,W,16);
+      rect(player, player.color);
+      ctx.fillStyle='#ff0'; bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
+      ctx.fillStyle='#f33'; foes.forEach(f=>ctx.fillRect(f.x,f.y,f.w,f.h));
+      ctx.fillStyle='#0f0'; ctx.fillText('HP:'+player.hp+'  Score:'+score, 8, 14);
+    }
+
+    function frame(ts){ const dt = ts-then; then=ts; update(dt); draw(); requestAnimationFrame(frame); }
+    requestAnimationFrame(frame);
+
+    canvas.tabIndex=0; canvas.focus();
+    canvas.addEventListener('keydown', e=>{ if(e.key==='p') paused=!paused; keys.add(e.key); });
+    canvas.addEventListener('keyup', e=>{ keys.delete(e.key); });
+  }
+
+  // Utility
+  function getTopWindow(){
+    let top=null, topZ=-1;
+    $$('.win').forEach(w=>{ const z = parseInt(w.style.zIndex||'0',10); if(z>topZ){ topZ=z; top=w; }});
+    return top;
+  }
+
 })();
 </script>
 </body>
