@@ -1,770 +1,815 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Pedro Pita — Win98 Desktop Portfolio</title>
-<meta name="description" content="A retro Win98-style desktop — vanilla JS, accessible, draggable/resizable windows, Start Menu, taskbar, and an inline KOMMANDO game." />
-<meta name="theme-color" content="#008080" />
-<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  /* ===== Win98 palette & metrics ===== */
-  :root{
-    --desk-green:#008080;
-    --title-blue:#000080;
-    --title-blue-inactive:#5b7aa0;
-
-    /* System colors (Win98-ish) */
-    --3d-face:#c0c0c0;
-    --3d-light:#dfdfdf;
-    --3d-shadow:#808080;
-    --3d-highlight:#ffffff;
-    --3d-dkframe:#000000;
-
-    --ink:#111;
-    --bar-h:32px;
-    --icon-w:120px;
-    --glyph:72px;
-    --rowH:132px;   /* still used for auto-arrange */
-    --pad:16px;
-
-    --z-task:1000; --z-win:2000; --z-menu:3000; --z-start:3500;
-  }
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--desk-green); color:var(--ink);
-    font:14px/1.45 Tahoma, "MS Sans Serif", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
-    -webkit-font-smoothing:antialiased; overflow:hidden;
-  }
-  *{image-rendering:pixelated}
-
-  /* ===== Bevel utilities (Win98 tri-tone) ===== */
-  .bevel-frame { border:1px solid var(--3d-dkframe); }
-  .bevel-raised {
-    background:var(--3d-face);
-    border-top:1px solid var(--3d-highlight);
-    border-left:1px solid var(--3d-highlight);
-    border-right:1px solid var(--3d-shadow);
-    border-bottom:1px solid var(--3d-shadow);
-    box-shadow:
-      inset -1px -1px 0 var(--3d-light),
-      inset  1px  1px 0 #b8b8b8;
-  }
-  .bevel-sunken {
-    background:var(--3d-face);
-    border-top:1px solid var(--3d-shadow);
-    border-left:1px solid var(--3d-shadow);
-    border-right:1px solid var(--3d-highlight);
-    border-bottom:1px solid var(--3d-highlight);
-    box-shadow:
-      inset  1px  1px 0 var(--3d-light),
-      inset -1px -1px 0 #b8b8b8;
-  }
-  .btn-3d {
-    background:var(--3d-face);
-    border:2px solid var(--3d-shadow);
-    border-right-color:var(--3d-highlight);
-    border-bottom-color:var(--3d-highlight);
-    cursor:pointer;
-  }
-  .btn-3d:active {
-    border:2px solid var(--3d-highlight);
-    border-right-color:var(--3d-shadow);
-    border-bottom-color:var(--3d-shadow);
-  }
-
-  /* ===== Desktop ===== */
-  .desktop{
-    position:fixed; inset:0; display:grid; grid-template-rows:1fr var(--bar-h);
-    background:
-      linear-gradient(0deg, rgba(0,0,0,.18), rgba(0,0,0,.18)),
-      url('canyon1.jpg') center / cover no-repeat fixed;
-  }
-  .icons{position:relative; padding:var(--pad); overflow:hidden}
-  .icon{
-    position:absolute; width:var(--icon-w); text-align:center; color:#fff;
-    cursor:default; user-select:none; appearance:none; background:transparent; border:0;
-    padding:6px; margin:0; touch-action:none
-  }
-  .icon:focus{outline:2px dotted #fff; outline-offset:2px}
-  .icon .glyph{width:var(--glyph);height:var(--glyph);margin:0 auto 6px;display:grid;place-items:center;position:relative}
-  .icon .label{display:inline-block; padding:4px 6px; background:rgba(0,0,128,.35); outline:1px solid rgba(255,255,255,.35); text-shadow:1px 1px 0 #000; font-size:15px}
-  .icon:focus .label{background:#000080; outline:1px solid #fff}
-  .icon.selected .label{background:#000080; outline:1px solid #fff}
-  /* CSS-only folder & file */
-  .folder::before{content:"";position:absolute;left:3px;top:6px;width:26px;height:11px;background:#f7d87a;border:1px solid #876d2b;border-bottom:none;box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
-  .folder::after{content:"";position:absolute;left:3px;top:14px;width:64px;height:44px;background:linear-gradient(#f7d87a,#f1cf69);border:1px solid #876d2b;box-shadow:inset -1px -1px 0 rgba(0,0,0,.12), inset 1px 1px 0 rgba(255,255,255,.35)}
-  .file::before{content:"";position:absolute;left:10px;top:6px;width:48px;height:60px;background:#fff;border:1px solid #444;box-shadow:inset -1px -1px 0 #aaa, inset 1px 1px 0 #fff}
-  .file::after{content:"TXT";position:absolute;left:14px;top:46px;font:bold 11px/1 JetBrains Mono,monospace;color:#000}
-  .glyph svg, .glyph img{width:64px;height:64px;display:block}
-
-  /* Marquee */
-  .marquee {
-    position:absolute; pointer-events:none;
-    border:1px dotted #fff; outline:1px solid #000; background:rgba(120,160,255,.2);
-  }
-
-  /* ===== Windows ===== */
-  .win{
-    position:absolute; top:100px; left:140px; width:min(900px, 90vw); max-height:72vh;
-    display:flex; flex-direction:column; background:var(--3d-face);
-    /* True Win98 frame + raised edge */
-    box-shadow:
-      0 0 0 1px var(--3d-dkframe),
-      1px 1px 0 1px var(--3d-shadow) inset,
-      -1px -1px 0 1px var(--3d-highlight) inset;
-  }
-  .titlebar{
-    height:28px; background:linear-gradient( to right, var(--title-blue), #1a2a8a ); color:#fff;
-    display:flex; align-items:center; padding:0 6px; gap:6px; cursor:grab; user-select:none
-  }
-  .win.inactive .titlebar{background:linear-gradient(to right, var(--title-blue-inactive), #8aa8c7)}
-  .titlebar .title{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .titlebar .ctl{display:flex; gap:2px}
-  .btn3d{width:22px; height:20px; display:grid; place-items:center}
-  .btn3d{ composes: btn-3d; } /* (logical reference; plain CSS below) */
-  .btn3d{ background:var(--3d-face); border:2px solid var(--3d-shadow); border-right-color:var(--3d-highlight); border-bottom-color:var(--3d-highlight); }
-  .btn3d:active{ border:2px solid var(--3d-highlight); border-right-color:var(--3d-shadow); border-bottom-color:var(--3d-shadow); }
-
-  .menubar{
-    height:26px; display:flex; align-items:center; gap:16px; padding:0 8px;
-    background:var(--3d-face);
-    border-top:1px solid var(--3d-highlight);
-    border-left:1px solid var(--3d-highlight);
-    border-right:1px solid var(--3d-shadow);
-    border-bottom:1px solid var(--3d-shadow);
-  }
-  .content{
-    flex:1; overflow:auto; padding:10px; background:var(--3d-light);
-    border-top:1px solid var(--3d-highlight);
-    border-left:1px solid var(--3d-highlight);
-  }
-  .statusbar{
-    height:22px; display:flex; align-items:center; gap:8px; padding:0 6px; background:var(--3d-face);
-    border-top:1px solid var(--3d-highlight);
-  }
-  .win.inactive{filter:saturate(.92) brightness(.98)}
-
-  /* Resizer grip */
-  .grip{
-    position:absolute; right:0; bottom:0; width:16px; height:16px;
-    background:
-      linear-gradient(135deg, transparent 0 6px, #9a9a9a 6px 8px, transparent 8px),
-      linear-gradient(135deg, transparent 6px 12px, #cfcfcf 12px 14px, transparent 14px);
-    cursor:nwse-resize;
-  }
-
-  /* ===== Taskbar + Start ===== */
-  .taskbar{
-    height:var(--bar-h); display:flex; align-items:center; gap:8px; padding:4px;
-    background:var(--3d-face);
-    border-top:1px solid var(--3d-highlight);
-    box-shadow:0 -1px 0 var(--3d-shadow) inset;
-  }
-  .start{
-    display:inline-flex; align-items:center; gap:6px; padding:0 10px; height:24px;
-    background:var(--3d-face);
-    border:2px solid var(--3d-shadow);
-    border-right-color:var(--3d-highlight); border-bottom-color:var(--3d-highlight);
-    cursor:pointer; font-weight:600
-  }
-  .start:active{ border:2px solid var(--3d-highlight); border-right-color:var(--3d-shadow); border-bottom-color:var(--3d-shadow); }
-  .tasklist{display:flex; gap:6px; align-items:center; overflow:auto; scrollbar-width:thin}
-  .task{
-    min-width:140px; max-width:260px; height:24px; display:inline-flex; align-items:center; gap:6px; padding:0 8px;
-    background:var(--3d-face);
-    border:2px solid var(--3d-shadow); border-right-color:var(--3d-highlight); border-bottom-color:var(--3d-highlight);
-    cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis
-  }
-  .task.active{background:#e4e4e4}
-  .clock{
-    margin-left:auto; background:#e4e4e4; height:24px; padding:0 8px; display:inline-grid; place-items:center;
-    border:2px solid var(--3d-shadow); border-right-color:var(--3d-highlight); border-bottom-color:var(--3d-highlight);
-    font-variant-numeric:tabular-nums
-  }
-
-  .startmenu{
-    position:fixed; left:4px; bottom:var(--bar-h); width:260px; display:none; flex-direction:column;
-    background:#f0f0f0; z-index:var(--z-start);
-    box-shadow:0 0 0 1px var(--3d-dkframe), 1px 1px 0 1px var(--3d-shadow) inset, -1px -1px 0 1px var(--3d-highlight) inset;
-  }
-  .startmenu .brand{padding:8px; font-weight:700; background:#004; color:#fff}
-  .startmenu .item{display:flex; align-items:center; gap:8px; padding:8px; border-top:1px solid #ddd; cursor:pointer}
-  .startmenu .item:hover{background:#dfe9ff}
-
-  /* ===== Content helpers ===== */
-  .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
-  .card{
-    background:#efefef; padding:8px;
-    box-shadow:0 0 0 1px var(--3d-dkframe), 1px 1px 0 1px var(--3d-shadow) inset, -1px -1px 0 1px var(--3d-highlight) inset;
-  }
-  .thumb{aspect-ratio:16/9; background:#c9c9c9; display:grid; place-items:center; font:600 12px/1 JetBrains Mono, monospace; color:#333; margin-bottom:6px}
-  .stack{display:flex; flex-wrap:wrap; gap:4px}
-  .stack span{
-    padding:3px 6px;
-    background:#f6f6f6;
-    border-top:1px solid var(--3d-highlight);
-    border-left:1px solid var(--3d-highlight);
-    border-right:1px solid var(--3d-shadow);
-    border-bottom:1px solid var(--3d-shadow);
-  }
-  .btn{
-    display:inline-block; padding:4px 8px; color:#000; text-decoration:none;
-    background:var(--3d-face);
-    border-top:2px solid var(--3d-highlight);
-    border-left:2px solid var(--3d-highlight);
-    border-right:2px solid var(--3d-shadow);
-    border-bottom:2px solid var(--3d-shadow);
-  }
-  .btn:hover{background:#fff}
-  .mono{font:13px/1.5 JetBrains Mono, ui-monospace, monospace; white-space:pre-wrap}
-  .dlg{
-    padding:10px; background:#eee;
-    box-shadow:0 0 0 1px var(--3d-dkframe), 1px 1px 0 1px var(--3d-shadow) inset, -1px -1px 0 1px var(--3d-highlight) inset;
-  }
-  .dlg .row{display:flex; gap:8px; justify-content:flex-end}
-
-  /* Context menu */
-  .ctx{
-    position:absolute; background:#fff; min-width:180px; display:none; flex-direction:column; z-index:var(--z-menu);
-    box-shadow:0 0 0 1px var(--3d-dkframe), 1px 1px 0 1px var(--3d-shadow) inset, -1px -1px 0 1px var(--3d-highlight) inset;
-  }
-  .ctx[hidden]{display:none !important}
-  .ctx button{appearance:none; border:0; background:#fff; text-align:left; padding:6px 10px; font:13px Tahoma}
-  .ctx button:hover{background:#cce5ff}
-</style>
-</head>
-<body>
-<div class="desktop" role="application" aria-label="Windows 98 desktop">
-  <div class="icons" id="desktopIcons" aria-label="Desktop icons">
-    <button class="icon" data-app="projects" data-side="left" aria-label="Open My Projects" tabindex="0">
-      <div class="glyph folder" aria-hidden="true"></div>
-      <span class="label">My Projects</span>
-    </button>
-    <button class="icon" data-app="resume" data-side="left" aria-label="Open Resume.txt" tabindex="0">
-      <div class="glyph file" aria-hidden="true"></div>
-      <span class="label">Resume.txt</span>
-    </button>
-    <button class="icon" data-app="about" data-side="left" aria-label="Open About" tabindex="0">
-      <div class="glyph folder" aria-hidden="true"></div>
-      <span class="label">About Me</span>
-    </button>
-    <button class="icon" data-app="internet" data-side="left" aria-label="Open Internet" tabindex="0">
-      <div class="glyph ie" aria-hidden="true"><img src="internet.svg" alt="" /></div>
-      <span class="label">Internet</span>
-    </button>
-    <button class="icon" data-app="contact" data-side="left" aria-label="Open Contact" tabindex="0">
-      <div class="glyph folder" aria-hidden="true"></div>
-      <span class="label">Contact</span>
-    </button>
-    <button class="icon" data-app="kommando" data-side="right" aria-label="Open KOMMANDO" tabindex="0">
-      <div class="glyph game" aria-hidden="true"><img src="kommando.svg" alt="" /></div>
-      <span class="label">KOMMANDO</span>
-    </button>
-  </div>
-
-  <!-- Right-click context menu -->
-  <div class="ctx" id="ctxMenu" role="menu" hidden>
-    <button data-cmd="arrange">Auto Arrange Icons</button>
-    <button data-cmd="toggleGrid">Toggle Grid Snap</button>
-    <button data-cmd="theme">Toggle Theme Color</button>
-    <button data-cmd="pro">Toggle Professional Mode</button>
-  </div>
-
-  <!-- Start Menu -->
-  <nav class="startmenu" id="startMenu" aria-label="Start Menu" hidden>
-    <div class="brand">Pedro Pita</div>
-    <div class="item" data-open="about">💬 About</div>
-    <div class="item" data-open="projects">🗂️ Projects</div>
-    <div class="item" data-open="resume">📄 Resume.txt</div>
-    <div class="item" data-open="internet">🌐 Internet</div>
-    <div class="item" data-open="contact">📧 Contact</div>
-    <div class="item" data-open="kommando">🎮 KOMMANDO</div>
-  </nav>
-
-  <!-- Taskbar -->
-  <div class="taskbar" aria-label="Taskbar">
-    <button class="start" id="startBtn" aria-haspopup="true" aria-expanded="false">🪟 Start</button>
-    <div class="tasklist" id="tasklist" role="tablist" aria-label="Open windows"></div>
-    <time class="clock" id="clock" aria-live="polite"></time>
-  </div>
-</div>
-
-<!-- ===== Templates (unchanged content) ===== -->
-<template id="tpl-about">
-  <section>
-    <h2>About Me</h2>
-    <div class="grid">
-      <article class="card">
-        <h3>Who I am</h3>
-        <p>Lisbon-based web developer shipping clean, production web work. Past life in video, sound, and data—now building quiet, fast interfaces and the systems behind them.</p>
-        <div class="stack"><span>JavaScript</span><span>React</span><span>Next.js</span><span>TypeScript</span><span>Tailwind</span><span>Node</span></div>
-      </article>
-      <article class="card">
-        <h3>System Properties</h3>
-        <div class="mono">Processor: Human (Full Stack)
-RAM: 8 hours sleep
-GPU: Coffee v2.0
-OS: Lisbon (Remote OK)
-        </div>
-      </article>
-    </div>
-  </section>
-</template>
-
-<template id="tpl-projects">
-  <section>
-    <h2>My Projects</h2>
-    <div class="grid">
-      <article class="card"><div class="thumb">Jungle Siege</div><h3>Jungle Siege</h3><p>Top-down action with custom HUD, bosses, cinematic intros.</p><p><a class="btn" href="https://ironsignalworks.com/games/jungle-siege" target="_blank" rel="noopener">Prototype</a></p></article>
-      <article class="card"><div class="thumb">Reaktor 404</div><h3>Reaktor 404</h3><p>Arcade mini game for apparel site.</p><p><a class="btn" href="https://ironsignalworks.com/games/reaktor-404" target="_blank" rel="noopener">Play</a></p></article>
-      <article class="card"><div class="thumb">Spam Invaders</div><h3>Spam Invaders</h3><p>Win98-flavored Space Invaders—just for fun.</p><p><a class="btn" href="https://ironsignalworks.com/games/spaminvaders" target="_blank" rel="noopener">Play</a></p></article>
-      <article class="card"><div class="thumb">Depthcharge</div><h3>Depthcharge</h3><p>Minimalist naval arcade—tight loop, crunchy feedback.</p><p><a class="btn" href="https://ironsignalworks.com/games/depthcharge" target="_blank" rel="noopener">Play</a></p></article>
-    </div>
-  </section>
-</template>
-
-<template id="tpl-resume">
-  <section>
-    <h2>Resume.txt</h2>
-    <p><a class="btn" href="/resume.pdf" target="_blank" rel="noopener">Download PDF</a></p>
-    <pre class="mono">Pedro Pita — Web Developer & Creative Technologist
-Lisbon, PT — Remote OK
-
-Skills: JavaScript, React/Next.js, Node, REST, SQL, A11y, SEO, Performance
-Experience: Client sites (Mojobyte), games (Iron Signal Works), tools (NovaScript)
-Links: github.com/ironsignalworks · linkedin.com/in/pedropita · hello@pedropita.dev
-    </pre>
-  </section>
-</template>
-
-<template id="tpl-internet">
-  <section>
-    <h2>Internet Explorer</h2>
-    <div id="ie-loading" class="card"><strong>Loading...</strong><div id="ie-bar" style="height:8px;background:#95b8ff;width:0%"></div></div>
-    <div class="grid" id="ie-links" style="display:none">
-      <article class="card"><h3>GitHub</h3><p><a class="btn" href="https://github.com/ironsignalworks" target="_blank" rel="noopener">Open</a></p></article>
-      <article class="card"><h3>LinkedIn</h3><p><a class="btn" href="https://www.linkedin.com/in/pedropita" target="_blank" rel="noopener">Open</a></p></article>
-      <article class="card"><h3>CodePen</h3><p><a class="btn" href="https://codepen.io/" target="_blank" rel="noopener">Open</a></p></article>
-      <article class="card"><h3>Website</h3><p><a class="btn" href="https://pedropita.dev" target="_blank" rel="noopener">Open</a></p></article>
-    </div>
-  </section>
-</template>
-
-<template id="tpl-contact">
-  <section>
-    <h2>Contact</h2>
-    <div role="dialog" aria-label="Send Message" class="dlg">
-      <label>Name<br><input style="width:100%" /></label><br><br>
-      <label>Email<br><input type="email" style="width:100%" /></label><br><br>
-      <label>Message<br><textarea rows="5" style="width:100%"></textarea></label>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" onclick="alert('Message sent (demo).')">OK</button>
-        <button class="btn" onclick="this.closest('.dlg').querySelectorAll('input,textarea').forEach(e=>e.value='')">Cancel</button>
-      </div>
-    </div>
-  </section>
-</template>
-
-<template id="tpl-kommando">
-  <section>
-    <h2>KOMMANDO</h2>
-    <p>Playable inline demo below; swap with your real build anytime.</p>
-    <canvas id="kommando-canvas" width="640" height="360" style="width:100%;max-width:820px;background:#000;display:block"></canvas>
-    <p class="mono">Controls: ← → move • ▲/W jump • SPACE fire • P pause</p>
-  </section>
-</template>
-
-<script>
-(function(){
-  const $ = (s,root=document)=>root.querySelector(s);
-  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
-  const desktop = $('.desktop');
-  const iconsRoot = $('#desktopIcons');
-  const tasklist = $('#tasklist');
-  const clock = $('#clock');
-  const ctxMenu = $('#ctxMenu');
-  const startBtn = $('#startBtn');
-  const startMenu = $('#startMenu');
-
-  const ICON_W = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--icon-w'))||120;
-  const ROW_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--rowH'))||132;
-  const PAD = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--pad'))||16;
-
-  /* ===== Clock ===== */
-  const fmt = v => String(v).padStart(2,'0');
-  const tick = () => { const d=new Date(); clock.textContent = `${fmt(d.getHours())}:${fmt(d.getMinutes())}`; };
-  tick(); setInterval(tick, 15_000);
-
-  /* ===== Z layering ===== */
-  let zTop = 2000; const raise = el => { zTop+=2; el.style.zIndex = zTop; $$('.win').forEach(w=>w.classList.toggle('inactive', w!==el)); };
-
-  /* ===== Drag helper (for windows) ===== */
-  function drag(el, startEv, onMove){
-    if(startEv.target.closest?.('.ctl')) return;
-    startEv.preventDefault();
-    const rect = el.getBoundingClientRect();
-    const ox = (startEv.clientX ?? startEv.touches?.[0]?.clientX ?? 0) - rect.left;
-    const oy = (startEv.clientY ?? startEv.touches?.[0]?.clientY ?? 0) - rect.top;
-    const move = (ev)=>{
-      const cx = (ev.clientX ?? ev.touches?.[0]?.clientX ?? 0) - ox;
-      const cy = (ev.clientY ?? ev.touches?.[0]?.clientY ?? 0) - oy;
-      onMove(cx, cy, ev);
-    };
-    const up = ()=>{
-      window.removeEventListener('pointermove',move);
-      window.removeEventListener('pointerup',up);
-      window.removeEventListener('touchmove',move);
-      window.removeEventListener('touchend',up);
-    };
-    window.addEventListener('pointermove',move);
-    window.addEventListener('pointerup',up);
-    window.addEventListener('touchmove',move,{passive:false});
-    window.addEventListener('touchend',up);
-  }
-
-  /* ===== Windows (unchanged core, trimmed here for brevity) ===== */
-  function openApp(id, title){
-    toggleStart(false); hideCtx();
-    const existing = document.querySelector(`.win[data-app="${id}"]`);
-    if(existing){ raise(existing); existing.style.display='flex'; activateTask(existing); return existing; }
-
-    const tpl = document.querySelector(`#tpl-${id}`); if(!tpl){ alert('Missing template for '+id); return; }
-    const win = document.createElement('section');
-    win.className = 'win';
-    win.dataset.app = id;
-    win.style.left = (120 + Math.random()*80) + 'px';
-    win.style.top  = (60 + Math.random()*60) + 'px';
-    win.innerHTML = `
-      <div class="titlebar" tabindex="0" role="toolbar">
-        <span class="title">${title}</span>
-        <div class="ctl">
-          <button class="btn3d btn-3d" data-act="min" title="Minimize">_</button>
-          <button class="btn3d btn-3d" data-act="max" title="Maximize">▢</button>
-          <button class="btn3d btn-3d" data-act="fs"  title="Fullscreen">⛶</button>
-          <button class="btn3d btn-3d" data-act="close" title="Close">✕</button>
-        </div>
-      </div>
-      <div class="menubar"><div>File</div><div>Edit</div><div>View</div><div>Help</div></div>
-      <div class="content"></div>
-      <div class="statusbar">Ready</div>
-      <div class="grip" title="Resize"></div>
-    `;
-    desktop.appendChild(win);
-    const content = win.querySelector('.content');
-    content.appendChild(tpl.content.cloneNode(true));
-    raise(win);
-
-    // Fake IE loader
-    if(id==='internet'){ const bar = content.querySelector('#ie-bar'); const box = content.querySelector('#ie-loading'); const links = content.querySelector('#ie-links'); let p=0; const t=setInterval(()=>{p=Math.min(100,p+5); bar.style.width=p+'%'; if(p>=100){clearInterval(t); box.style.display='none'; links.style.display='grid';}},60); }
-    // Game
-    if(id==='kommando'){ initKommando(content.querySelector('#kommando-canvas')); }
-
-    // Drag window
-    const tb = win.querySelector('.titlebar');
-    tb.addEventListener('pointerdown', ev=> drag(win, ev, (x,y)=>{
-      const maxX = innerWidth - win.offsetWidth - 2; const maxY = innerHeight - win.offsetHeight - 34;
-      win.style.left = Math.max(0, Math.min(maxX, x)) + 'px';
-      win.style.top = Math.max(0, Math.min(maxY, y)) + 'px';
-    }));
-    tb.addEventListener('dblclick', ()=> toggleMax(win));
-
-    // Resize
-    const grip = win.querySelector('.grip');
-    grip.addEventListener('pointerdown', ev=>{
-      ev.preventDefault(); raise(win);
-      const start = win.getBoundingClientRect();
-      const sx = ev.clientX, sy = ev.clientY;
-      const move = (e)=>{
-        const dx = (e.clientX - sx), dy = (e.clientY - sy);
-        win.style.width = Math.max(360, start.width + dx) + 'px';
-        win.style.height = Math.max(220, start.height + dy) + 'px';
-      };
-      const up = ()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); };
-      window.addEventListener('pointermove',move);
-      window.addEventListener('pointerup',up);
-    });
-
-    // Controls
-    win.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.btn3d'); if(!btn) return;
-      const act = btn.dataset.act;
-      if(act==='close') closeWin(win);
-      else if(act==='min') minimizeWin(win);
-      else if(act==='max') toggleMax(win);
-      else if(act==='fs') toggleFullscreen(win);
-    });
-
-    win.addEventListener('mousedown', ()=> raise(win));
-    addTaskButton(win, title);
-    return win;
-  }
-  function setStatus(win, t){ const s=win.querySelector('.statusbar'); if(s) s.textContent=t; }
-  function closeWin(win){ const id = win.dataset.app; document.querySelector(`.task[data-app="${id}"]`)?.remove(); win.remove(); }
-  function minimizeWin(win){ const id = win.dataset.app; document.querySelector(`.task[data-app="${id}"]`)?.classList.remove('active'); win.style.display='none'; }
-  function toggleMax(win){
-    if(win.dataset.max!=='1'){
-      win.dataset.prev = JSON.stringify({left:win.style.left, top:win.style.top, w:win.style.width, h:win.style.height});
-      win.style.left='0'; win.style.top='0'; win.style.width=(innerWidth-2)+'px'; win.style.height=(innerHeight-34)+'px'; win.dataset.max='1'; setStatus(win,'Maximized');
-    }else{
-      const p = JSON.parse(win.dataset.prev||'{}');
-      win.style.left = p.left||'120px'; win.style.top = p.top||'60px'; win.style.width = p.w||'min(880px,88vw)'; win.style.height = p.h||''; delete win.dataset.max; delete win.dataset.prev; setStatus(win,'Restored');
-    }
-  }
-  function toggleFullscreen(win){
-    const can = !!(document.fullscreenEnabled && win.requestFullscreen);
-    if(!can){ toggleMax(win); return; }
-    try{ if(document.fullscreenElement===win){ document.exitFullscreen?.(); } else { win.requestFullscreen({navigationUI:'hide'}).catch(()=>toggleMax(win)); } }catch{ toggleMax(win); }
-  }
-  function addTaskButton(win, title){
-    const id = win.dataset.app;
-    const btn = document.createElement('button');
-    btn.className='task active'; btn.dataset.app=id; btn.innerHTML=`🪟 <span>${title}</span>`;
-    tasklist.appendChild(btn);
-    btn.addEventListener('click', ()=>{ if(win.style.display==='none'){ win.style.display='flex'; setStatus(win,'Restored'); } raise(win); activateTask(win); });
-    activateTask(win);
-  }
-  function activateTask(win){ const id=win.dataset.app; $$('.task').forEach(t=>t.classList.toggle('active', t.dataset.app===id)); }
-
-  // Start menu
-  function toggleStart(force){
-    const show = (force!==undefined) ? force : (startMenu.style.display==='none' || startMenu.hasAttribute('hidden'));
-    if(show){ startMenu.style.display='flex'; startMenu.removeAttribute('hidden'); }
-    else { startMenu.style.display='none'; startMenu.setAttribute('hidden',''); }
-    startBtn.setAttribute('aria-expanded', show?'true':'false');
-  }
-  toggleStart(false);
-  startBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleStart(); });
-  window.addEventListener('click', ()=>{ toggleStart(false); hideCtx(); });
-
-  // Start items
-  const openMap = {
-    projects:['My Projects','projects'],
-    resume:['Resume.txt','resume'],
-    about:['About Me','about'],
-    internet:['Internet Explorer','internet'],
-    contact:['Contact','contact'],
-    kommando:['KOMMANDO','kommando']
-  };
-  startMenu.addEventListener('click', (e)=>{ const id=e.target.getAttribute('data-open'); if(!id) return; const [title,app]=openMap[id]; openApp(app,title); toggleStart(false); });
-
-  /* ===== Context menu ===== */
-  function hideCtx(){ ctxMenu.setAttribute('hidden',''); ctxMenu.style.display='none'; }
-  document.body.addEventListener('contextmenu', (e)=>{
-    e.preventDefault(); ctxMenu.removeAttribute('hidden'); ctxMenu.style.display='flex';
-    ctxMenu.style.left=e.clientX+'px'; ctxMenu.style.top=e.clientY+'px';
-  });
-  ctxMenu.addEventListener('click', (e)=>{
-    const cmd = e.target.dataset.cmd; if(!cmd) return;
-    if(cmd==='arrange') autoArrange();
-    if(cmd==='toggleGrid'){ gridSnap = !gridSnap; }
-    if(cmd==='theme') toggleTheme();
-    if(cmd==='pro') document.body.classList.toggle('pro');
-    hideCtx();
-  });
-  function toggleTheme(){
-    const teal = getComputedStyle(document.documentElement).getPropertyValue('--desk-green').trim();
-    document.documentElement.style.setProperty('--desk-green', teal==='#008080' ? '#004a7f' : '#008080');
-  }
-
-  /* ===== Desktop ICONS: OS-like drag + marquee ===== */
-  let gridSnap = true;          // toggle via context menu
-  const grid = 8;               // 8px snap
-  let marquee=null, selectStart=null;
-  const selected = new Set();
-
-  function clearSelection(){ selected.forEach(ic=>ic.classList.remove('selected')); selected.clear(); }
-
-  // Click blank desktop => clear selection
-  iconsRoot.addEventListener('pointerdown', (e)=>{
-    if(e.target.closest('.icon')) return; // icons handled separately
-    const startX = e.clientX, startY = e.clientY;
-    selectStart = {x:startX, y:startY};
-    if(!marquee){ marquee = document.createElement('div'); marquee.className='marquee'; desktop.appendChild(marquee); }
-    marquee.style.left = startX+'px'; marquee.style.top = startY+'px'; marquee.style.width='0px'; marquee.style.height='0px';
-    marquee.hidden = false;
-
-    const move = (ev)=>{
-      const x = Math.min(startX, ev.clientX), y = Math.min(startY, ev.clientY);
-      const w = Math.abs(ev.clientX - startX), h = Math.abs(ev.clientY - startY);
-      marquee.style.left = x+'px'; marquee.style.top = y+'px'; marquee.style.width = w+'px'; marquee.style.height = h+'px';
-      const mRect = marquee.getBoundingClientRect();
-      $$('.icon', iconsRoot).forEach(ic=>{
-        const r = ic.getBoundingClientRect();
-        const hit = !(r.right < mRect.left || r.left > mRect.right || r.bottom < mRect.top || r.top > mRect.bottom);
-        ic.classList.toggle('selected', hit);
-        if(hit) selected.add(ic); else selected.delete(ic);
-      });
-    };
-    const up = ()=>{
-      window.removeEventListener('pointermove',move);
-      window.removeEventListener('pointerup',up);
-      marquee.hidden = true;
-    };
-    // If user just clicks (no move), clear selection
-    const clickClear = setTimeout(()=>{}, 0);
-    window.addEventListener('pointermove',move);
-    window.addEventListener('pointerup',up,{once:true});
-    // If it was a click without drag, clear selection
-    window.addEventListener('pointerup', ()=>{
-      const dx=Math.abs((selectStart?.x||0)-startX), dy=Math.abs((selectStart?.y||0)-startY);
-      if(dx<3 && dy<3) clearSelection();
-      selectStart=null;
-    }, {once:true});
-  });
-
-  // Icon click/selection and group drag
-  $$('.icon').forEach(ic=>{
-    ic.addEventListener('pointerdown', ev=>{
-      ev.stopPropagation();
-
-      const isToggle = ev.ctrlKey || ev.metaKey || ev.shiftKey;
-      if(!ic.classList.contains('selected')){
-        if(!isToggle) clearSelection();
-        ic.classList.add('selected'); selected.add(ic);
-      } else if(isToggle){
-        ic.classList.remove('selected'); selected.delete(ic);
+  <head>
+    <title>Pedro Pita — creative web engineering</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      :root { --accent:#00e5ff; }
+      html, body { height: 100%; font-family: 'Roboto Mono', monospace; }
+      body {
+        margin: 0;
+        background: #000;
+        overflow: hidden;
+        font-family: 'Roboto Mono', monospace;
       }
+      #bgCanvas, #textCanvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+      #bgCanvas { z-index: 0; pointer-events: none; }
+      #textCanvas { z-index: 1; }
+      body.hover-link { cursor: pointer; }
+      #resumeLayer {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        transform: translateY(110%);
+        transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        z-index: 3;
+        pointer-events: none;
+        overflow-y: auto;
+        padding: 2rem;
+        scrollbar-width: thin;
+        scrollbar-color: #1a1a1a #000;
+      }
+      #resumeLayer.visible {
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      #resumeLayer .resume-content {
+        max-width: 960px;
+        margin: 0 auto;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Roboto Mono', monospace;
+        line-height: 1.6;
+      }
+      #resumeLayer .resume-content .actions {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+      }
+      #resumeLayer .resume-content .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: #000;
+        color: #fff;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.95rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 0;
+        cursor: pointer;
+        transition: border-color 0.2s, transform 0.08s;
+      }
+      #resumeLayer .resume-content .btn:hover { border-color: rgba(255, 255, 255, 0.65); }
+      #resumeLayer .resume-content .btn:active { transform: translateY(1px); }
+      @media (max-width: 720px) {
+        #resumeLayer {
+          padding: 1.25rem;
+        }
+      }
+      #resumeLayer .resume-content h1,
+      #resumeLayer .resume-content h2,
+      #resumeLayer .resume-content h3,
+      #resumeLayer .resume-content h4,
+      #resumeLayer .resume-content h5,
+      #resumeLayer .resume-content h6 {
+        font-family: 'Roboto Mono', monospace;
+        margin-top: 1.25rem;
+        margin-bottom: 0.35rem;
+        color: #00e5ff;
+      }
+      #resumeLayer .resume-content p,
+      #resumeLayer .resume-content ul {
+        margin-bottom: 1rem;
+      }
+      #resumeLayer .resume-content a {
+        color: #00e5ff;
+      }
+      #resumeLayer::-webkit-scrollbar {
+        width: 10px;
+      }
+      #resumeLayer::-webkit-scrollbar-track {
+        background: #000;
+      }
+      #resumeLayer::-webkit-scrollbar-thumb {
+        background: #1a1a1a;
+      }
+      @media print {
+        @page { margin: 8mm; size: A4 portrait; }
+        html, body {
+          margin: 0;
+          height: auto;
+          overflow: visible;
+          font-size: calc(0.78rem + 2px);
+        }
+        #bgCanvas, #textCanvas {
+          display: none;
+        }
+        #resumeLayer {
+          position: static;
+          inset: auto;
+          height: auto;
+          overflow: visible;
+          transform: translateY(0) !important;
+          pointer-events: none;
+          background: #000;
+          padding: 0;
+          scrollbar-width: none;
+          box-shadow: none;
+          max-width: 100%;
+          width: 100%;
+          page-break-after: avoid;
+          page-break-inside: avoid;
+        }
+        #resumeLayer .resume-content {
+          max-width: 100%;
+          padding: 0;
+          font-size: calc(0.85rem + 2px);
+          line-height: 1.4;
+          page-break-inside: avoid;
+        }
+        #resumeLayer .resume-content p,
+        #resumeLayer .resume-content .meta {
+          margin-bottom: 0.65rem;
+        }
+        #resumeLayer .resume-content p:last-child {
+          margin-bottom: 0;
+        }
+        #resumeLayer .resume-content .actions {
+          display: none !important;
+        }
+        #resumeLayer .resume-content h1,
+        #resumeLayer .resume-content h2,
+        #resumeLayer .resume-content h3,
+        #resumeLayer .resume-content h4,
+        #resumeLayer .resume-content h5,
+        #resumeLayer .resume-content h6 {
+          color: #f5f5f5;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../build/three.module.js",
+          "three/webgpu": "../build/three.webgpu.js",
+          "three/tsl": "../build/three.tsl.js",
+          "three/addons/": "./jsm/"
+        }
+      }
+    </script>
 
-      // Start drag of selection group
-      const startPos = {};
-      selected.forEach(node=>{
-        const s = getComputedStyle(node);
-        startPos[node.dataset._id || (node.dataset._id = Math.random().toString(36).slice(2))] = {
-          node,
-          left: parseInt(s.left||'0',10) || node.offsetLeft,
-          top:  parseInt(s.top||'0',10) || node.offsetTop
+    <script type="module">
+      import * as THREEGL from 'three';                 // WebGL overlay (text)
+      import * as THREEGPU from 'three/webgpu';         // WebGPU background
+      import { texture, textureStore, Fn, instanceIndex, float, uvec2, vec2, vec3, vec4, uniform } from 'three/tsl';
+      import WebGPU from 'three/addons/capabilities/WebGPU.js';
+      import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+      import { Font } from 'three/addons/loaders/FontLoader.js';
+      import { unzipSync, strFromU8 } from 'three/addons/libs/fflate.module.js';
+
+      // ---------- BACKGROUND (WebGPU) ----------
+      let gpuRenderer, bgScene, bgCamera, bgPlane, computeNode;
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.id = 'bgCanvas';
+      document.body.appendChild(bgCanvas);
+
+      // uniforms (TSL) for reactive plasma
+      const uTime   = uniform(0);
+      const uMouse  = uniform(new THREEGL.Vector2(0.5, 0.5)); // normalized [0..1]
+      const uAspect = uniform(1.0);
+      const targetMouse = { x: Math.random(), y: Math.random() };     // smoothed target
+
+      // ---------- TEXT OVERLAY (WebGL) ----------
+      let glRenderer, textScene, textCamera;
+      const textCanvas = document.createElement('canvas');
+      textCanvas.id = 'textCanvas';
+      document.body.appendChild(textCanvas);
+
+      const resumeLayer = document.createElement('div');
+      resumeLayer.id = 'resumeLayer';
+      resumeLayer.innerHTML = `
+        <div class="resume-content"></div>
+      `;
+      document.body.appendChild(resumeLayer);
+      const resumeContent = resumeLayer.querySelector('.resume-content');
+      const shareResumeHandler = async (event) => {
+        const shareBtn = event.currentTarget;
+        const url = new URL(window.location.href);
+        url.searchParams.set('clean', '1');
+        const shareData = {
+          title: 'Pedro Pita - Resume',
+          text: 'Resume - Creative Technologist & Web Developer',
+          url: url.toString()
         };
-      });
-      const sx = ev.clientX, sy = ev.clientY;
-
-      const move = (e)=>{
-        const dx = (e.clientX - sx), dy = (e.clientY - sy);
-        selected.forEach(n=>{
-          const key = n.dataset._id;
-          const base = startPos[key];
-          let nx = base.left + dx;
-          let ny = base.top + dy;
-          // bounds
-          nx = Math.max(PAD, Math.min(innerWidth - PAD - ICON_W, nx));
-          ny = Math.max(PAD, Math.min(innerHeight - PAD - 34 - 92, ny)); // 92 ~ icon tile height
-          if(gridSnap){
-            nx = Math.round(nx / grid) * grid;
-            ny = Math.round(ny / grid) * grid;
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+          } catch {
+            // user canceled share
           }
-          n.style.left = nx + 'px';
-          n.style.top  = ny + 'px';
+          return;
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(shareData.url);
+            if (shareBtn) {
+              const previous = shareBtn.textContent;
+              shareBtn.textContent = 'Link copied!';
+              setTimeout(() => {
+                shareBtn.textContent = previous;
+              }, 1400);
+            }
+            return;
+          } catch {
+            window.prompt('Copy this URL:', shareData.url);
+            return;
+          }
+        }
+        window.prompt('Copy this URL:', shareData.url);
+      };
+      const downloadResumeHandler = () => window.print();
+      const attachResumeActions = () => {
+        if (!resumeContent) return;
+        const shareBtn = resumeContent.querySelector('#shareBtn');
+        const downloadBtn = resumeContent.querySelector('#downloadBtn');
+        shareBtn?.addEventListener('click', shareResumeHandler);
+        downloadBtn?.addEventListener('click', downloadResumeHandler);
+      };
+      const loadResumeContent = async () => {
+        if (!resumeContent) return;
+        try {
+          const response = await fetch('./resume/index.html');
+          if (!response.ok) throw new Error('Failed to fetch resume');
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const source = doc.querySelector('.content-wrapper') || doc.body;
+          if (!source) {
+            resumeContent.textContent = 'Resume content unavailable.';
+            return;
+          }
+          source.querySelectorAll('script, style, link, meta, canvas').forEach((node) => node.remove());
+          resumeContent.innerHTML = source.innerHTML;
+          attachResumeActions();
+        } catch (error) {
+          resumeContent.textContent = 'Unable to load resume.';
+        }
+      };
+      loadResumeContent();
+      const showResumeLayer = () => {
+        resumeLayer.scrollTop = 0;
+        resumeLayer.classList.add('visible');
+      };
+      const hideResumeLayer = () => resumeLayer.classList.remove('visible');
+      resumeLayer.addEventListener('click', (event) => {
+        if (event.target === resumeLayer) hideResumeLayer();
+      });
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') hideResumeLayer();
+      });
+      window.addEventListener('wheel', (event) => {
+        if (resumeLayer.classList.contains('visible')) return;
+        if (event.deltaY > 5) showResumeLayer();
+      }, { passive: true });
+      resumeLayer.addEventListener('wheel', (event) => {
+        if (!resumeLayer.classList.contains('visible')) return;
+        if (resumeLayer.scrollTop <= 0 && event.deltaY < -5) {
+          hideResumeLayer();
+        }
+      }, { passive: true });
+
+      const raycaster = new THREEGL.Raycaster();
+      const pointer = new THREEGL.Vector2(-10, -10);
+      const clickables = [];
+      let lastHover = null;
+      const pointerWorld = new THREEGL.Vector2();
+      let dragTarget = null;
+      const dragOffset = new THREEGL.Vector2();
+      let dragMoved = false;
+      let didDrag = false;
+      const draggableWords = [];
+      let currentAspect = window.innerWidth / window.innerHeight;
+
+      function clampToRange(value, limit) {
+        if (limit <= 0) return 0;
+        return Math.min(Math.max(value, -limit), limit);
+      }
+
+      const WHITE = new THREEGL.Color(0xffffff);
+      const ACCENT = new THREEGL.Color(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00e5ff');
+      let hasWebGPU = true;
+
+      // ---------- INIT ----------
+      (async () => {
+        await initBackground();
+        await initTextOverlay();
+        onResize();
+        animate();
+      })();
+
+      async function initBackground() {
+        if (!WebGPU.isAvailable()) {
+          const err = WebGPU.getErrorMessage();
+          err.style.position = 'fixed';
+          err.style.zIndex = 2;
+          err.style.left = '50%';
+          err.style.top = '35%';
+          err.style.transform = 'translateX(-50%)';
+          document.body.appendChild(err);
+          bgCanvas.style.display = 'none';
+          hasWebGPU = false;
+          return;
+        }
+
+        const aspect = window.innerWidth / window.innerHeight;
+        // Ortho in NDC-ish space (height ~2, width ~2*aspect)
+        bgCamera = new THREEGPU.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
+        bgCamera.position.z = 1;
+        uAspect.value = aspect;
+
+        bgScene = new THREEGPU.Scene();
+
+        // Make sure your imports include vec3 (and uniform if you use it):
+// import { texture, textureStore, Fn, instanceIndex, float, uvec2, vec2, vec3, vec4, uniform } from 'three/tsl';
+
+// Compute texture (animated, reactive)
+const width = 768, height = 768; // adjust for perf/quality
+const storageTexture = new THREEGPU.StorageTexture(width, height);
+
+// Reactive plasma kernel with time/mouse/aspect + TECH PALETTE (Option 5)
+const computeTexture = Fn(({ storageTexture, uTime, uMouse, uAspect }) => {
+  const px  = instanceIndex.mod(width);
+  const py  = instanceIndex.div(width);
+  const uvx = float(px).div(float(width));
+  const uvy = float(py).div(float(height));
+  const indexUV = uvec2(px, py);
+
+  // Centered coords with aspect correction
+  const cx = uvx.mul(2.0).sub(1.0).mul(uAspect);
+  const cy = uvy.mul(2.0).sub(1.0);
+
+  // Mouse-centered ripple (mouse in [0..1], remap to [-1..1])
+  const mx = uMouse.x.mul(2.0).sub(1.0).mul(uAspect);
+  const my = uMouse.y.mul(2.0).sub(1.0);
+  const dx = cx.sub(mx);
+  const dy = cy.sub(my);
+  const dist = dx.mul(dx).add(dy.mul(dy)).sqrt();
+
+  // Time scroll
+  const t = uTime.mul(0.18);
+  const x = uvx.mul(6.0).add(t);
+  const y = uvy.mul(6.0).sub(t.mul(0.6));
+
+  // Plasma base
+  const v1 = x.sin();
+  const v2 = y.cos();
+  const v3 = x.add(y).sin();
+  const ripple = dist.mul(12.0).sub(t.mul(3.0)).sin().mul(0.7);
+  const v = v1.mul(0.5).add(v2.mul(0.5)).add(v3.mul(0.5)).add(ripple);
+
+  // base signal as 3 channels
+  const base = vec3(
+    v,
+    v.add(1.57),
+    v.add(3.14159)
+  ).sin();
+
+  // rotate in RGB space
+  const ang = uTime.mul(0.6);
+  const ca = ang.cos();
+  const sa = ang.sin();
+
+  // 3x3 rotation-ish (Y-then-Z)
+  const m00 = ca;          const m01 = sa.mul(-1.0); const m02 = float(0.0);
+  const m10 = sa;          const m11 = ca;           const m12 = float(0.0);
+  const m20 = float(0.0);  const m21 = float(0.0);   const m22 = float(1.0);
+
+  const rot = vec3(
+    base.x.mul(m00).add(base.y.mul(m01)).add(base.z.mul(m02)),
+    base.x.mul(m10).add(base.y.mul(m11)).add(base.z.mul(m12)),
+    base.x.mul(m20).add(base.y.mul(m21)).add(base.z.mul(m22))
+  );
+
+  // slight contrast curve
+  const col = rot.mul(0.5).add(0.5).pow(1.1);
+
+  const r = col.x;
+  const g = col.y;
+  const b_ = col.z;
+
+  textureStore(storageTexture, indexUV, vec4(r, g, b_, 1.0)).toWriteOnly();
+});
+
+
+        // Build compute node with uniforms
+        computeNode = computeTexture({ storageTexture, uTime, uMouse, uAspect }).compute(width * height);
+
+        const bgMat = new THREEGPU.MeshBasicNodeMaterial();
+        bgMat.colorNode = texture(storageTexture);
+
+        bgPlane = new THREEGPU.Mesh(new THREEGPU.PlaneGeometry(2 * aspect, 2), bgMat);
+        bgPlane.position.z = -0.5;
+        bgScene.add(bgPlane);
+
+        gpuRenderer = new THREEGPU.WebGPURenderer({ antialias: true, canvas: bgCanvas, powerPreference: 'high-performance' });
+        const dpr = Math.min(window.devicePixelRatio, 2);
+        gpuRenderer.setPixelRatio(dpr);
+        gpuRenderer.setSize(window.innerWidth, window.innerHeight);
+        await gpuRenderer.init();
+
+        // keep the background canvas sized correctly
+        window.addEventListener('resize', onResize);
+      }
+
+      async function initTextOverlay() {
+        // Ortho camera for text too → predictable layout
+        const aspect = window.innerWidth / window.innerHeight;
+        currentAspect = aspect;
+        textCamera = new THREEGL.OrthographicCamera(-aspect, aspect, 1, -1, -10, 10);
+        textCamera.position.z = 1;
+
+        textScene = new THREEGL.Scene();
+        textScene.background = null;
+
+        glRenderer = new THREEGL.WebGLRenderer({ antialias: true, alpha: true, canvas: textCanvas });
+        glRenderer.setPixelRatio(window.devicePixelRatio);
+        glRenderer.setSize(window.innerWidth, window.innerHeight);
+        glRenderer.setClearColor(0x000000, 0);
+
+        // Materials: solid white, no depth test to avoid z-fighting
+        const fillMat = new THREEGL.MeshBasicMaterial({ color: 0xffffff, side: THREEGL.DoubleSide, depthTest: false });
+        const strokeMat = new THREEGL.MeshBasicMaterial({ color: 0xffffff, side: THREEGL.DoubleSide, depthTest: false });
+
+        const font = await loadZippedTypeface(
+          'fonts/MPLUSRounded1c/MPLUSRounded1c-Regular.typeface.json.zip',
+          'MPLUSRounded1c-Regular.typeface.json'
+        );
+
+        // Font sizes: Pedro Pita = H1, Studio/Resume/Email = H2
+        const responsiveScale = Math.min(1, Math.max(window.innerWidth / 900, 0.65));
+        const H1 = 0.10 * responsiveScale;   // Pedro Pita
+        const H2 = 0.04 * responsiveScale;   // Studio, Resume, Email
+
+        const wordSpecs = [
+          { text: 'Pedro', height: H1 },
+          { text: 'Pita', height: H1 },
+          { text: 'Studio', height: H2, url: 'https://ironsignalworks.com' },
+          { text: 'Resume', height: H2, action: 'resume' },
+          { text: 'hello@pedropita.dev', height: H2, url: 'mailto:hello@pedropita.dev' }
+        ];
+        const horizontalLimit = Math.max(aspect * 0.65 * responsiveScale, 0.35);
+        const verticalLimit = Math.min(0.85, 0.65 + responsiveScale * 0.3);
+        const placementPadding = 0.05 + (1 - responsiveScale) * 0.08;
+        const placementAttempts = 120;
+
+        function overlapsCandidate(x, y, width, height, existing) {
+          const bounds = existing.userData.bounds;
+          if (!bounds) return false;
+          const halfWidth = (width + bounds.width) / 2 + placementPadding;
+          const halfHeight = (height + bounds.height) / 2 + placementPadding;
+          return Math.abs(x - existing.position.x) < halfWidth && Math.abs(y - existing.position.y) < halfHeight;
+        }
+
+        function findSpawnPosition(width, height) {
+          const marginX = width / 2 + placementPadding;
+          const marginY = height / 2 + placementPadding;
+          const baseHorizontalSpan = Math.min(horizontalLimit, aspect);
+          const randomLimitX = Math.max(baseHorizontalSpan - marginX, 0.1);
+          const randomLimitY = Math.max(verticalLimit - marginY, 0.1);
+          const viewLimitX = Math.max(aspect - marginX, marginX);
+          const viewLimitY = Math.max(1 - marginY, marginY);
+
+          for (let attempt = 0; attempt < placementAttempts; attempt++) {
+            const xCandidate = (Math.random() * 2 - 1) * randomLimitX;
+            const yCandidate = (Math.random() * 2 - 1) * randomLimitY;
+            const x = clampToRange(xCandidate, viewLimitX);
+            const y = clampToRange(yCandidate, viewLimitY);
+            let blocked = false;
+            for (const existing of draggableWords) {
+              if (overlapsCandidate(x, y, width, height, existing)) {
+                blocked = true;
+                break;
+              }
+            }
+            if (!blocked) return { x, y };
+          }
+
+          const fallbackScaleX = 0.5 + responsiveScale * 0.5;
+          const fallbackScaleY = 0.4 + responsiveScale * 0.5;
+          const fallbackOffsets = [
+            { x: 0, y: 0 },
+            { x: -0.5, y: 0.3 },
+            { x: 0.5, y: 0.3 },
+            { x: -0.5, y: -0.3 },
+            { x: 0.5, y: -0.3 },
+            { x: -0.7, y: 0 },
+            { x: 0.7, y: 0 },
+            { x: 0, y: -0.5 }
+          ].map((entry) => ({
+            x: entry.x * fallbackScaleX,
+            y: entry.y * fallbackScaleY
+          }));
+          for (const offset of fallbackOffsets) {
+            const x = clampToRange(offset.x * randomLimitX, viewLimitX);
+            const y = clampToRange(offset.y * randomLimitY, viewLimitY);
+            let blocked = false;
+            for (const existing of draggableWords) {
+              if (overlapsCandidate(x, y, width, height, existing)) {
+                blocked = true;
+                break;
+              }
+            }
+            if (!blocked) return { x, y };
+          }
+
+          const fallbackX = clampToRange(((draggableWords.length % 3) - 1) * 0.3, viewLimitX);
+          const fallbackY = clampToRange(-0.4 + Math.floor(draggableWords.length / 3) * 0.2, viewLimitY);
+          return { x: fallbackX, y: fallbackY };
+        }
+
+        for (const spec of wordSpecs) {
+        const hitPadding = spec.url || spec.action ? 0.25 : 0.015;
+        const wordGroup = makeStrokeText(font, spec.text, spec.height, fillMat.clone(), strokeMat.clone(), hitPadding);
+          wordGroup.userData.isDraggableWord = true;
+
+          // If it has a URL or action, it's also a clickable link
+          if (spec.url || spec.action) {
+            if (spec.url) wordGroup.userData.url = spec.url;
+            if (spec.action) wordGroup.userData.action = spec.action;
+            wordGroup.userData.isLink = true;
+            wordGroup.userData.setHover = (hover) => {
+              for (const child of wordGroup.children) {
+                if (child.material && child.material.color) {
+                  child.material.color.copy(hover ? ACCENT : WHITE);
+                  child.material.needsUpdate = true;
+                }
+              }
+            };
+            clickables.push(wordGroup);
+          }
+
+          const bounds = wordGroup.userData.bounds ?? { width: Math.max(spec.text.length * 0.09, 0.2), height: spec.height };
+          const { x, y } = findSpawnPosition(bounds.width, bounds.height);
+          wordGroup.position.set(x, y, 0);
+          draggableWords.push(wordGroup);
+          textScene.add(wordGroup);
+        }
+
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+        window.addEventListener('click', onClick);
+        window.addEventListener('resize', onResize);
+      }
+
+      // ---------- Text helpers ----------
+      async function loadZippedTypeface(zipPath, jsonName) {
+        const buf = await new THREEGL.FileLoader().setResponseType('arraybuffer').loadAsync(zipPath);
+        const zip = unzipSync(new Uint8Array(buf));
+        const json = strFromU8(new Uint8Array(zip[jsonName].buffer));
+        return new Font(JSON.parse(json));
+      }
+
+      function makeStrokeText(font, text, targetHeight, fillMat, strokeMat, hitboxPadding = 0.015) {
+        // Build at a big base size for precision
+        const baseSize = 100;
+        const shapes = font.generateShapes(text, baseSize, 'ltr');
+
+        // --- Fill geometry ---
+        const geom = new THREEGL.ShapeGeometry(shapes);
+        geom.computeBoundingBox();
+        const bb = geom.boundingBox;
+
+        // center the text around (0,0)
+        const xMid = -0.5 * (bb.max.x - bb.min.x);
+        const yMid = -0.5 * (bb.max.y - bb.min.y);
+        geom.translate(xMid, yMid, 0);
+
+        const group = new THREEGL.Group();
+
+        // Solid fill (white), no depth fighting
+        const fill = new THREEGL.Mesh(geom, fillMat);
+        fill.material.depthTest = false;
+        fill.material.depthWrite = false;
+        fill.renderOrder = 1;
+        group.add(fill);
+
+        // --- Stroke geometry (outlines) ---
+        const holeShapes = [];
+        for (let i = 0; i < shapes.length; i++) {
+          const s = shapes[i];
+          if (s.holes && s.holes.length) holeShapes.push(...s.holes);
+        }
+        shapes.push(...holeShapes);
+
+        const strokeWidth = 5; // tweak (2–8)
+        const style = SVGLoader.getStrokeStyle(strokeWidth, '#ffffff');
+
+        for (let i = 0; i < shapes.length; i++) {
+          const pts = shapes[i].getPoints();
+          const g = SVGLoader.pointsToStroke(pts, style);
+          g.translate(xMid, yMid, 0);
+          const strokeMesh = new THREEGL.Mesh(g, strokeMat);
+          strokeMesh.material.depthTest = false;
+          strokeMesh.material.depthWrite = false;
+          strokeMesh.renderOrder = 2;
+          group.add(strokeMesh);
+        }
+
+        // --- Correct scaling ---
+        const ascender = bb.max.y;
+        const baseline = Math.max(bb.min.y, 0);
+        const capHeight = Math.max(ascender - baseline, 0.001);
+        const scale = targetHeight / capHeight;
+        group.scale.set(scale, scale, 1);
+
+        const widthWorld = (bb.max.x - bb.min.x) * scale;
+        const worldHeight = (bb.max.y - bb.min.y) * scale;
+
+        // Add invisible bounding box plane for easier touch/click detection
+        // hitboxPadding provided per word; clickable terms get larger targets
+        const hitboxGeom = new THREEGL.PlaneGeometry(
+          widthWorld + hitboxPadding * 2,
+          worldHeight + hitboxPadding * 2
+        );
+        const hitboxMat = new THREEGL.MeshBasicMaterial({
+          transparent: true,
+          opacity: 0,
+          depthTest: false,
+          depthWrite: false
         });
-      };
-      const up = ()=>{
-        window.removeEventListener('pointermove',move);
-        window.removeEventListener('pointerup',up);
-      };
-      window.addEventListener('pointermove',move);
-      window.addEventListener('pointerup',up);
-    });
+        const hitbox = new THREEGL.Mesh(hitboxGeom, hitboxMat);
+        hitbox.renderOrder = 0;
+        hitbox.userData.isHitbox = true;
+        group.add(hitbox);
 
-    // Keyboard accessibility: Enter opens
-    ic.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){
-        const map = {
-          projects:['My Projects','projects'],
-          resume:['Resume.txt','resume'],
-          about:['About Me','about'],
-          internet:['Internet Explorer','internet'],
-          contact:['Contact','contact'],
-          kommando:['KOMMANDO','kommando']
-        };
-        const [title,id] = map[ic.dataset.app]||[ic.dataset.app,ic.dataset.app];
-        openApp(id, title);
+        group.userData.bounds = { width: widthWorld, height: worldHeight };
+        group.userData.getMeshes = () => group.children;
+        return group;
       }
-    });
-  });
 
-  function autoArrange(){
-    // Keep your original left/right column auto-arrange
-    const leftCol = PAD; const rightCol = innerWidth - PAD - ICON_W;
-    let y = PAD; $$('.icon[data-side="left"]').forEach(ic=>{ ic.style.left=leftCol+'px'; ic.style.top=y+'px'; y+=ROW_H; });
-    let ry = PAD; $$('.icon[data-side="right"]').forEach(ic=>{ ic.style.left=rightCol+'px'; ic.style.top=ry+'px'; ry+=ROW_H; });
-    clearSelection();
-  }
+      function place(group, x, y) {
+        group.position.set(x, y, 0);
+      }
 
-  // Boot layout
-  autoArrange();
+      // ---------- Interaction ----------
+      function syncPointerFromEvent(e) {
+        const rect = textCanvas.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        pointerWorld.set(pointer.x * currentAspect, pointer.y);
+      }
 
-  /* ===== Taskbar clock already set above ===== */
+      function onPointerMove(e) {
+        // existing text interactions
+        syncPointerFromEvent(e);
 
-  /* ===== Windows actions we reference (min/max already above) ===== */
-  function activateTask(win){ const id=win.dataset.app; $$('.task').forEach(t=>t.classList.toggle('active', t.dataset.app===id)); }
-
-  /* ===== Context helpers ===== */
-  function hideCtx(){ ctxMenu.setAttribute('hidden',''); ctxMenu.style.display='none'; }
-
-  /* ===== KOMMANDO (unchanged) ===== */
-  function initKommando(canvas){
-    if(!canvas || canvas.__booted) return; canvas.__booted = true;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    let then = 0, paused = false;
-    const keys = new Set();
-    const player = {x:80, y:H-40, vx:0, vy:0, w:18, h:24, onGround:true, color:'#0f0', hp:3, cd:0};
-    const bullets = []; const foes = [];
-    let spawn=0, score=0;
-
-    function rect(r, c){ ctx.fillStyle=c; ctx.fillRect(r.x, r.y, r.w, r.h); }
-    function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
-    function spawnFoe(){ const y=H-40; foes.push({x:W+20, y, w:18, h:22, vx:- (1.2+Math.random()*1.5), hp:1}); }
-    function fire(){ if(player.cd>0) return; bullets.push({x:player.x+player.w, y:player.y+player.h/2-2, vx:5, w:8, h:4}); player.cd=10; }
-
-    function update(dt){
-      if(paused) return;
-      player.vx = (keys.has('ArrowRight')||keys.has('d'))? 2.1 : (keys.has('ArrowLeft')||keys.has('a'))? -2.1 : 0;
-      if((keys.has('ArrowUp')||keys.has('w')) && player.onGround){ player.vy=-5.4; player.onGround=false; }
-      if(keys.has(' ') ) fire();
-      if(player.cd>0) player.cd -= 1;
-
-      player.vy += 0.22;
-      player.x += player.vx; player.y += player.vy;
-      if(player.y+player.h>=H-16){ player.y=H-16-player.h; player.vy=0; player.onGround=true; }
-      player.x = clamp(player.x, 0, W-player.w);
-
-      bullets.forEach(b=>{ b.x += b.vx; });
-      while(bullets.length && bullets[0].x>W+40) bullets.shift();
-
-      if(spawn<=0){ spawn = 60+Math.random()*60; spawnFoe(); } else spawn -= dt*60/16;
-      foes.forEach(f=>{ f.x += f.vx; });
-      while(foes.length && foes[0].x<-40) { foes.shift(); score=Math.max(0,score-1); }
-
-      for(let fi=foes.length-1; fi>=0; fi--){
-        const f = foes[fi];
-        for(let bi=bullets.length-1; bi>=0; bi--){
-          const b = bullets[bi];
-          if(b.x<b.w+f.x && b.x+b.w>f.x && b.y<b.h+f.y && b.y+b.h>f.y){ foes.splice(fi,1); bullets.splice(bi,1); score+=5; break; }
+        if (dragTarget) {
+          dragMoved = true;
+          const newX = pointerWorld.x - dragOffset.x;
+          const newY = pointerWorld.y - dragOffset.y;
+          const bounds = dragTarget.userData.bounds || { width: 0, height: 0 };
+          const padding = 0.05;
+          const limitX = Math.max(currentAspect - bounds.width / 2 - padding, 0);
+          const limitY = Math.max(1 - bounds.height / 2 - padding, 0);
+          const clampedX = clampToRange(newX, limitX);
+          const clampedY = clampToRange(newY, limitY);
+          dragTarget.position.set(clampedX, clampedY, 0);
+          return;
         }
-        if(player.x<player.w+f.x && player.x+player.w>f.x && player.y<player.h+f.y && player.y+player.h>f.y){
-          foes.splice(fi,1); player.hp-=1; score=Math.max(0,score-5);
+
+        raycaster.setFromCamera(pointer, textCamera);
+
+        const meshes = [];
+        for (const obj of clickables) meshes.push(...obj.userData.getMeshes());
+
+        const hits = raycaster.intersectObjects(meshes, false);
+        let hoverGroup = null;
+
+        if (hits.length) {
+          let node = hits[0].object;
+          while (node && node.parent) {
+            if (node.userData?.isLink) { hoverGroup = node; break; }
+            if (node.parent.userData?.isLink) { hoverGroup = node.parent; break; }
+            node = node.parent;
+          }
+        }
+
+        if (hoverGroup !== lastHover) {
+          if (lastHover) lastHover.userData.setHover(false);
+          if (hoverGroup) hoverGroup.userData.setHover(true);
+          lastHover = hoverGroup || null;
+          document.body.classList.toggle('hover-link', !!lastHover);
         }
       }
-    }
 
-    function draw(){
-      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#222'; ctx.fillRect(0,H-16,W,16);
-      rect(player, player.color);
-      ctx.fillStyle='#ff0'; bullets.forEach(b=>ctx.fillRect(b.x,b.y,b.w,b.h));
-      ctx.fillStyle='#f33'; foes.forEach(f=>ctx.fillRect(f.x,f.y,f.w,f.h));
-      ctx.fillStyle='#0f0'; ctx.fillText('HP:'+player.hp+'  Score:'+score, 8, 14);
-    }
+      function findDraggableGroup(node) {
+        while (node) {
+          if (node.userData?.isDraggableWord) return node;
+          node = node.parent;
+        }
+        return null;
+      }
 
-    function frame(ts){ const dt = ts-then; then=ts; update(dt); draw(); requestAnimationFrame(frame); }
-    requestAnimationFrame(frame);
-    canvas.tabIndex=0; canvas.focus();
-    canvas.addEventListener('keydown', e=>{ if(e.key==='p') paused=!paused; keys.add(e.key); });
-    canvas.addEventListener('keyup', e=>{ keys.delete(e.key); });
-  }
-})();
-</script>
-</body>
+      function onPointerDown(e) {
+        didDrag = false;
+        syncPointerFromEvent(e);
+
+        const meshes = [];
+        for (const word of draggableWords) meshes.push(...word.userData.getMeshes());
+        if (!meshes.length) return;
+
+        raycaster.setFromCamera(pointer, textCamera);
+        const hits = raycaster.intersectObjects(meshes, false);
+        if (!hits.length) return;
+
+        const target = findDraggableGroup(hits[0].object);
+        if (!target) return;
+
+        dragTarget = target;
+        dragOffset.set(pointerWorld.x - target.position.x, pointerWorld.y - target.position.y);
+        dragMoved = false;
+      }
+
+      function onPointerUp() {
+        didDrag = dragMoved;
+        dragTarget = null;
+        dragMoved = false;
+      }
+
+      function onClick() {
+        if (didDrag) {
+          didDrag = false;
+          return;
+        }
+        if (!lastHover) return;
+        const { url, action } = lastHover.userData;
+        if (action === 'resume') {
+          showResumeLayer();
+          return;
+        }
+        if (url) window.open(url, '_blank', 'noopener');
+      }
+
+      // ---------- Resize / Render loop ----------
+      function onResize() {
+        const w = window.innerWidth, h = window.innerHeight;
+        const aspect = w / h;
+        currentAspect = aspect;
+
+        // BG
+        if (hasWebGPU && gpuRenderer && bgCamera && bgPlane) {
+          gpuRenderer.setSize(w, h);
+          bgCamera.left = -aspect;
+          bgCamera.right = aspect;
+          bgCamera.updateProjectionMatrix();
+          bgPlane.scale.set(aspect, 1, 1);
+          uAspect.value = aspect; // keep plasma round-ish across aspect ratios
+        }
+
+        // Text
+        if (glRenderer && textCamera) {
+          glRenderer.setSize(w, h);
+          textCamera.left = -aspect;
+          textCamera.right = aspect;
+          textCamera.updateProjectionMatrix();
+        }
+
+        if (draggableWords.length) {
+          const padding = 0.05;
+          for (const word of draggableWords) {
+            const bounds = word.userData.bounds || { width: 0, height: 0 };
+            const limitX = Math.max(currentAspect - bounds.width / 2 - padding, 0);
+            const limitY = Math.max(1 - bounds.height / 2 - padding, 0);
+            word.position.x = clampToRange(word.position.x, limitX);
+            word.position.y = clampToRange(word.position.y, limitY);
+          }
+        }
+      }
+
+      function animate(t = 0) {
+        // uniforms update
+        uTime.value = t * 0.001;
+
+        // smooth mouse (lerp)
+        const lerp = (a, b, s) => a + (b - a) * s;
+        uMouse.value.x = lerp(uMouse.value.x, targetMouse.x, 0.15);
+        uMouse.value.y = lerp(uMouse.value.y, targetMouse.y, 0.15);
+
+        // compute every frame, then render both layers
+        if (hasWebGPU && gpuRenderer && computeNode) gpuRenderer.compute(computeNode);
+        if (hasWebGPU && gpuRenderer && bgScene && bgCamera) gpuRenderer.render(bgScene, bgCamera);
+        if (glRenderer && textScene && textCamera) glRenderer.render(textScene, textCamera);
+
+        requestAnimationFrame(animate);
+      }
+    </script>
+  </body>
 </html>
