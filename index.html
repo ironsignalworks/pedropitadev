@@ -9,15 +9,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
       :root { --accent:#00e5ff; }
-      *, *::before, *::after { font-family: 'Roboto Mono', monospace !important; }
-      html, body { height: 100%; font-family: 'Roboto Mono', monospace; }
+      *, *::before, *::after { font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important; }
+      html, body { height: 100%; font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif; }
       body {
         margin: 0;
         background: #000;
         overflow: hidden;
-        font-family: 'Roboto Mono', monospace;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
       }
       #bgCanvas, #textCanvas { position: fixed; inset: 0; width: 100%; height: 100%; }
       #bgCanvas { z-index: 0; pointer-events: none; }
@@ -44,11 +45,16 @@
         max-width: 960px;
         margin: 0 auto;
         color: rgba(255, 255, 255, 0.9);
-        font-family: 'Roboto Mono', monospace;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
         line-height: 1.6;
       }
+      #resumeLayer .resume-content,
+      #resumeLayer .resume-content *::before,
+      #resumeLayer .resume-content *::after {
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
+      }
       #resumeLayer .resume-content * {
-        font-family: 'Roboto Mono', monospace !important;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
       }
       #resumeLayer .resume-content .actions {
         display: flex;
@@ -62,7 +68,7 @@
         border: 1px solid rgba(255, 255, 255, 0.35);
         background: #000;
         color: #fff;
-        font-family: 'Roboto Mono', monospace;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
         font-size: 0.95rem;
         padding: 0.4rem 0.85rem;
         border-radius: 0;
@@ -82,7 +88,7 @@
       #resumeLayer .resume-content h4,
       #resumeLayer .resume-content h5,
       #resumeLayer .resume-content h6 {
-        font-family: 'Roboto Mono', monospace !important;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
         margin-top: 1.25rem;
         margin-bottom: 0.35rem;
         color: #00e5ff;
@@ -93,7 +99,7 @@
       #resumeLayer .resume-content li,
       #resumeLayer .resume-content span,
       #resumeLayer .resume-content div {
-        font-family: 'Roboto Mono', monospace !important;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
       }
       #resumeLayer .resume-content p,
       #resumeLayer .resume-content ul {
@@ -101,7 +107,7 @@
       }
       #resumeLayer .resume-content a {
         color: #00e5ff;
-        font-family: 'Roboto Mono', monospace !important;
+        font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important;
       }
       #resumeLayer::-webkit-scrollbar {
         width: 10px;
@@ -394,13 +400,82 @@
               }
             });
             
-            // Force Roboto Mono on all text elements
+            // Set resume content
             resumeContent.innerHTML = source.innerHTML;
             
-            // Apply Roboto Mono to all elements after loading
+            // Apply Roboto to all elements after loading
             resumeContent.querySelectorAll('*').forEach((el) => {
-              el.style.fontFamily = "'Roboto Mono', monospace";
+              el.style.fontFamily = "'Roboto', 'Helvetica Neue', 'Arial', sans-serif";
             });
+            
+            // Check if buttons already exist, if not create them
+            let shareBtn = resumeContent.querySelector('#shareBtn');
+            let downloadBtn = resumeContent.querySelector('#downloadBtn');
+            
+            if (!shareBtn || !downloadBtn) {
+              // Remove any existing .actions div first
+              const existingActions = resumeContent.querySelector('.actions');
+              if (existingActions) existingActions.remove();
+              
+              // Create new action buttons
+              const actionsDiv = document.createElement('div');
+              actionsDiv.className = 'actions';
+              actionsDiv.innerHTML = `
+                <button class="btn" id="shareBtn">Share</button>
+                <button class="btn" id="downloadBtn">Download PDF</button>
+              `;
+              
+              // Insert buttons at the top
+              resumeContent.insertBefore(actionsDiv, resumeContent.firstChild);
+              
+              // Get the newly created buttons
+              shareBtn = resumeContent.querySelector('#shareBtn');
+              downloadBtn = resumeContent.querySelector('#downloadBtn');
+            }
+            
+            // Attach button handlers
+            if (shareBtn) {
+              shareBtn.addEventListener('click', async (event) => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('clean', '1');
+                const shareData = {
+                  title: 'Pedro Pita - Resume',
+                  text: 'Resume - Creative Technologist & Web Developer',
+                  url: url.toString()
+                };
+                
+                if (navigator.share) {
+                  try {
+                    await navigator.share(shareData);
+                  } catch {
+                    // user canceled
+                  }
+                  return;
+                }
+                
+                if (navigator.clipboard && window.isSecureContext) {
+                  try {
+                    await navigator.clipboard.writeText(shareData.url);
+                    const previous = shareBtn.textContent;
+                    shareBtn.textContent = 'Link copied!';
+                    setTimeout(() => {
+                      shareBtn.textContent = previous;
+                    }, 1400);
+                    return;
+                  } catch {
+                    window.prompt('Copy this URL:', shareData.url);
+                  }
+                } else {
+                  window.prompt('Copy this URL:', shareData.url);
+                }
+              });
+            }
+            
+            if (downloadBtn) {
+              downloadBtn.addEventListener('click', () => {
+                window.print();
+              });
+            }
           } catch (error) {
             resumeContent.textContent = 'Unable to load resume.';
           }
