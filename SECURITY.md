@@ -1,7 +1,0 @@
-## Security guidance
-
-1. **Headers/HSTS** – The `_headers` file ensures Netlify/Cloudflare serve HSTS plus `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and the cross-origin/opener/embedder policies. That file also defines our base CSP (self-only assets, no `iframe`, explicit font/script/style allowances) so the site enforces HTTPS and mitigates clickjacking or MIME sniffing.
-2. **DNS & Email** – Keep DNSSEC enabled, enforce SPF/DKIM/DMARC on all sender addresses, and avoid wildcard subdomains unless intentionally used by your registrar (e.g., Gandi or Cloudflare).
-3. **Deployment hygiene** – Pin dependencies, run `npm audit` or Dependabot weekly, never commit `.env` secrets, and restrict deploy hooks to the trusted IP ranges Cloudflare/Netlify provide. Continue to avoid inline scripts/use SRI-friendly bundles and sanitize any dynamic input before rendering with libraries such as DOMPurify.
-4. **Monitoring** – Periodically run Mozilla Observatory or securityheaders.com to verify grades, and use OWASP ZAP/Burp Community for quick scans. Enable bot-fight mode, rate limiting, and Cloudflare email alerts for suspicious traffic spikes.
-5. **Operational advice** – Use 2FA/hardware keys on GitHub, Netlify, Cloudflare, etc., rotate API keys, track deployments in an internal changelog, and keep privacy-first analytics (Plausible/Fathom) while minimizing local storage usage.

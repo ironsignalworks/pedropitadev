@@ -47,6 +47,9 @@
         font-family: 'Roboto Mono', monospace;
         line-height: 1.6;
       }
+      #resumeLayer .resume-content * {
+        font-family: 'Roboto Mono', monospace !important;
+      }
       #resumeLayer .resume-content .actions {
         display: flex;
         justify-content: flex-start;
@@ -79,10 +82,18 @@
       #resumeLayer .resume-content h4,
       #resumeLayer .resume-content h5,
       #resumeLayer .resume-content h6 {
-        font-family: 'Roboto Mono', monospace;
+        font-family: 'Roboto Mono', monospace !important;
         margin-top: 1.25rem;
         margin-bottom: 0.35rem;
         color: #00e5ff;
+        font-weight: 700;
+      }
+      #resumeLayer .resume-content p,
+      #resumeLayer .resume-content ul,
+      #resumeLayer .resume-content li,
+      #resumeLayer .resume-content span,
+      #resumeLayer .resume-content div {
+        font-family: 'Roboto Mono', monospace !important;
       }
       #resumeLayer .resume-content p,
       #resumeLayer .resume-content ul {
@@ -90,6 +101,7 @@
       }
       #resumeLayer .resume-content a {
         color: #00e5ff;
+        font-family: 'Roboto Mono', monospace !important;
       }
       #resumeLayer::-webkit-scrollbar {
         width: 10px;
@@ -153,312 +165,261 @@
           color: #f5f5f5;
         }
       }
+      #error {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: #f00;
+        background: rgba(0,0,0,0.9);
+        padding: 10px;
+        font-family: monospace;
+        z-index: 1000;
+        display: none;
+      }
     </style>
   </head>
   <body>
   
+    <div id="error"></div>
+
     <script type="importmap">
       {
         "imports": {
-          "three": "../build/three.module.js",
-          "three/webgpu": "../build/three.webgpu.js",
-          "three/tsl": "../build/three.tsl.js",
-          "three/addons/": "./jsm/"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
         }
       }
     </script>
 
     <script type="module">
-      import * as THREEGL from 'three';                 // WebGL overlay (text)
-      import * as THREEGPU from 'three/webgpu';         // WebGPU background
-      import { texture, textureStore, Fn, instanceIndex, float, uvec2, vec2, vec3, vec4, uniform } from 'three/tsl';
-      import WebGPU from 'three/addons/capabilities/WebGPU.js';
-      import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
-      import { Font } from 'three/addons/loaders/FontLoader.js';
-      import { unzipSync, strFromU8 } from 'three/addons/libs/fflate.module.js';
-
-      // ---------- BACKGROUND (WebGPU) ----------
-      let gpuRenderer, bgScene, bgCamera, bgPlane, computeNode;
-      const bgCanvas = document.createElement('canvas');
-      bgCanvas.id = 'bgCanvas';
-      document.body.appendChild(bgCanvas);
-
-      // uniforms (TSL) for reactive plasma
-      const uTime   = uniform(0);
-      const uMouse  = uniform(new THREEGL.Vector2(0.5, 0.5)); // normalized [0..1]
-      const uAspect = uniform(1.0);
-      const targetMouse = { x: Math.random(), y: Math.random() };     // smoothed target
-
-      // ---------- TEXT OVERLAY (WebGL) ----------
-      let glRenderer, textScene, textCamera;
-      const textCanvas = document.createElement('canvas');
-      textCanvas.id = 'textCanvas';
-      document.body.appendChild(textCanvas);
-
-      const resumeLayer = document.createElement('div');
-      resumeLayer.id = 'resumeLayer';
-      resumeLayer.innerHTML = `
-        <div class="resume-content"></div>
-      `;
-      document.body.appendChild(resumeLayer);
-      const resumeContent = resumeLayer.querySelector('.resume-content');
-      const shareResumeHandler = async (event) => {
-        const shareBtn = event.currentTarget;
-        const url = new URL(window.location.href);
-        url.searchParams.set('clean', '1');
-        const shareData = {
-          title: 'Pedro Pita - Resume',
-          text: 'Resume - Creative Technologist & Web Developer',
-          url: url.toString()
-        };
-        if (navigator.share) {
-          try {
-            await navigator.share(shareData);
-          } catch {
-            // user canceled share
-          }
-          return;
-        }
-        if (navigator.clipboard && window.isSecureContext) {
-          try {
-            await navigator.clipboard.writeText(shareData.url);
-            if (shareBtn) {
-              const previous = shareBtn.textContent;
-              shareBtn.textContent = 'Link copied!';
-              setTimeout(() => {
-                shareBtn.textContent = previous;
-              }, 1400);
-            }
-            return;
-          } catch {
-            window.prompt('Copy this URL:', shareData.url);
-            return;
-          }
-        }
-        window.prompt('Copy this URL:', shareData.url);
-      };
-      const downloadResumeHandler = () => window.print();
-      const attachResumeActions = () => {
-        if (!resumeContent) return;
-        const shareBtn = resumeContent.querySelector('#shareBtn');
-        const downloadBtn = resumeContent.querySelector('#downloadBtn');
-        shareBtn?.addEventListener('click', shareResumeHandler);
-        downloadBtn?.addEventListener('click', downloadResumeHandler);
-      };
-      const loadResumeContent = async () => {
-        if (!resumeContent) return;
-        try {
-          const response = await fetch('./resume/index.html');
-          if (!response.ok) throw new Error('Failed to fetch resume');
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const source = doc.querySelector('.content-wrapper') || doc.body;
-          if (!source) {
-            resumeContent.textContent = 'Resume content unavailable.';
-            return;
-          }
-          source.querySelectorAll('script, style, link, meta, canvas').forEach((node) => node.remove());
-          resumeContent.innerHTML = source.innerHTML;
-          attachResumeActions();
-        } catch (error) {
-          resumeContent.textContent = 'Unable to load resume.';
-        }
-      };
-      loadResumeContent();
-      const showResumeLayer = () => {
-        resumeLayer.scrollTop = 0;
-        resumeLayer.classList.add('visible');
-      };
-      const hideResumeLayer = () => resumeLayer.classList.remove('visible');
-      resumeLayer.addEventListener('click', (event) => {
-        if (event.target === resumeLayer) hideResumeLayer();
+      const errorDiv = document.getElementById('error');
+      
+      window.addEventListener('error', (e) => {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Error: ' + e.message;
+        console.error('Error:', e);
       });
-      window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') hideResumeLayer();
-      });
-      window.addEventListener('wheel', (event) => {
-        if (resumeLayer.classList.contains('visible')) return;
-        if (event.deltaY > 5) showResumeLayer();
-      }, { passive: true });
-      resumeLayer.addEventListener('wheel', (event) => {
-        if (!resumeLayer.classList.contains('visible')) return;
-        if (resumeLayer.scrollTop <= 0 && event.deltaY < -5) {
-          hideResumeLayer();
-        }
-      }, { passive: true });
 
-      const raycaster = new THREEGL.Raycaster();
-      const pointer = new THREEGL.Vector2(-10, -10);
-      const clickables = [];
-      let lastHover = null;
-      const pointerWorld = new THREEGL.Vector2();
-      let dragTarget = null;
-      const dragOffset = new THREEGL.Vector2();
-      let dragMoved = false;
-      let didDrag = false;
-      const draggableWords = [];
-      let currentAspect = window.innerWidth / window.innerHeight;
+      try {
+        const THREE = await import('three');
+        const { SVGLoader } = await import('three/addons/loaders/SVGLoader.js');
+        const { Font } = await import('three/addons/loaders/FontLoader.js');
 
-      function clampToRange(value, limit) {
-        if (limit <= 0) return 0;
-        return Math.min(Math.max(value, -limit), limit);
-      }
+        console.log('Three.js loaded successfully');
 
-      const WHITE = new THREEGL.Color(0xffffff);
-      const ACCENT = new THREEGL.Color(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00e5ff');
-      let hasWebGPU = true;
+        // Random seed for background variation
+        const randomSeed = Math.random() * 1000;
 
-      // ---------- INIT ----------
-      (async () => {
-        await initBackground();
-        await initTextOverlay();
-        onResize();
-        animate();
-      })();
-
-      async function initBackground() {
-        if (!WebGPU.isAvailable()) {
-          const err = WebGPU.getErrorMessage();
-          err.style.position = 'fixed';
-          err.style.zIndex = 2;
-          err.style.left = '50%';
-          err.style.top = '35%';
-          err.style.transform = 'translateX(-50%)';
-          document.body.appendChild(err);
-          bgCanvas.style.display = 'none';
-          hasWebGPU = false;
-          return;
-        }
+        // ---------- BACKGROUND (WebGL) ----------
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.id = 'bgCanvas';
+        document.body.appendChild(bgCanvas);
 
         const aspect = window.innerWidth / window.innerHeight;
-        // Ortho in NDC-ish space (height ~2, width ~2*aspect)
-        bgCamera = new THREEGPU.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
+        const bgCamera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
         bgCamera.position.z = 1;
-        uAspect.value = aspect;
 
-        bgScene = new THREEGPU.Scene();
+        const bgScene = new THREE.Scene();
 
-        // Make sure your imports include vec3 (and uniform if you use it):
-// import { texture, textureStore, Fn, instanceIndex, float, uvec2, vec2, vec3, vec4, uniform } from 'three/tsl';
+        // Static mouse position (randomized once, doesn't follow pointer)
+        const staticMouse = new THREE.Vector2(Math.random(), Math.random());
 
-// Compute texture (animated, reactive)
-const width = 768, height = 768; // adjust for perf/quality
-const storageTexture = new THREEGPU.StorageTexture(width, height);
+        const shaderMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uMouse: { value: staticMouse },
+            uAspect: { value: aspect },
+            uSeed: { value: randomSeed }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform float uTime;
+            uniform vec2 uMouse;
+            uniform float uAspect;
+            uniform float uSeed;
+            varying vec2 vUv;
 
-// Reactive plasma kernel with time/mouse/aspect + TECH PALETTE (Option 5)
-const computeTexture = Fn(({ storageTexture, uTime, uMouse, uAspect }) => {
-  const px  = instanceIndex.mod(width);
-  const py  = instanceIndex.div(width);
-  const uvx = float(px).div(float(width));
-  const uvy = float(py).div(float(height));
-  const indexUV = uvec2(px, py);
+            void main() {
+              vec2 uv = vUv;
+              vec2 centered = (uv * 2.0 - 1.0) * vec2(uAspect, 1.0);
+              vec2 mouse = (uMouse * 2.0 - 1.0) * vec2(uAspect, 1.0);
+              float dist = length(centered - mouse);
 
-  // Centered coords with aspect correction
-  const cx = uvx.mul(2.0).sub(1.0).mul(uAspect);
-  const cy = uvy.mul(2.0).sub(1.0);
+              float t = uTime * 0.18 + uSeed;
+              float x = uv.x * 6.0 + t;
+              float y = uv.y * 6.0 - t * 0.6 + uSeed * 0.5;
 
-  // Mouse-centered ripple (mouse in [0..1], remap to [-1..1])
-  const mx = uMouse.x.mul(2.0).sub(1.0).mul(uAspect);
-  const my = uMouse.y.mul(2.0).sub(1.0);
-  const dx = cx.sub(mx);
-  const dy = cy.sub(my);
-  const dist = dx.mul(dx).add(dy.mul(dy)).sqrt();
+              float v1 = sin(x + uSeed);
+              float v2 = cos(y);
+              float v3 = sin(x + y + uSeed * 0.3);
+              float ripple = sin(dist * 12.0 - t * 3.0 + uSeed) * 0.7;
+              float v = v1 * 0.5 + v2 * 0.5 + v3 * 0.5 + ripple;
 
-  // Time scroll
-  const t = uTime.mul(0.18);
-  const x = uvx.mul(6.0).add(t);
-  const y = uvy.mul(6.0).sub(t.mul(0.6));
+              vec3 base = sin(vec3(v, v + 1.57, v + 3.14159));
 
-  // Plasma base
-  const v1 = x.sin();
-  const v2 = y.cos();
-  const v3 = x.add(y).sin();
-  const ripple = dist.mul(12.0).sub(t.mul(3.0)).sin().mul(0.7);
-  const v = v1.mul(0.5).add(v2.mul(0.5)).add(v3.mul(0.5)).add(ripple);
+              float ang = uTime * 0.6 + uSeed * 0.2;
+              float ca = cos(ang);
+              float sa = sin(ang);
 
-  // base signal as 3 channels
-  const base = vec3(
-    v,
-    v.add(1.57),
-    v.add(3.14159)
-  ).sin();
+              mat3 rot = mat3(
+                ca, -sa, 0.0,
+                sa,  ca, 0.0,
+                0.0, 0.0, 1.0
+              );
 
-  // rotate in RGB space
-  const ang = uTime.mul(0.6);
-  const ca = ang.cos();
-  const sa = ang.sin();
+              vec3 col = rot * base;
+              col = pow(col * 0.5 + 0.5, vec3(1.1));
 
-  // 3x3 rotation-ish (Y-then-Z)
-  const m00 = ca;          const m01 = sa.mul(-1.0); const m02 = float(0.0);
-  const m10 = sa;          const m11 = ca;           const m12 = float(0.0);
-  const m20 = float(0.0);  const m21 = float(0.0);   const m22 = float(1.0);
+              gl_FragColor = vec4(col, 1.0);
+            }
+          `
+        });
 
-  const rot = vec3(
-    base.x.mul(m00).add(base.y.mul(m01)).add(base.z.mul(m02)),
-    base.x.mul(m10).add(base.y.mul(m11)).add(base.z.mul(m12)),
-    base.x.mul(m20).add(base.y.mul(m21)).add(base.z.mul(m22))
-  );
-
-  // slight contrast curve
-  const col = rot.mul(0.5).add(0.5).pow(1.1);
-
-  const r = col.x;
-  const g = col.y;
-  const b_ = col.z;
-
-  textureStore(storageTexture, indexUV, vec4(r, g, b_, 1.0)).toWriteOnly();
-});
-
-
-        // Build compute node with uniforms
-        computeNode = computeTexture({ storageTexture, uTime, uMouse, uAspect }).compute(width * height);
-
-        const bgMat = new THREEGPU.MeshBasicNodeMaterial();
-        bgMat.colorNode = texture(storageTexture);
-
-        bgPlane = new THREEGPU.Mesh(new THREEGPU.PlaneGeometry(2 * aspect, 2), bgMat);
+        const bgPlane = new THREE.Mesh(
+          new THREE.PlaneGeometry(2 * aspect, 2),
+          shaderMaterial
+        );
         bgPlane.position.z = -0.5;
         bgScene.add(bgPlane);
 
-        gpuRenderer = new THREEGPU.WebGPURenderer({ antialias: true, canvas: bgCanvas, powerPreference: 'high-performance' });
-        const dpr = Math.min(window.devicePixelRatio, 2);
-        gpuRenderer.setPixelRatio(dpr);
-        gpuRenderer.setSize(window.innerWidth, window.innerHeight);
-        await gpuRenderer.init();
+        const bgRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: bgCanvas });
+        bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        bgRenderer.setSize(window.innerWidth, window.innerHeight);
 
-        // keep the background canvas sized correctly
-        window.addEventListener('resize', onResize);
-      }
+        console.log('Background renderer created');
 
-      async function initTextOverlay() {
-        // Ortho camera for text too → predictable layout
-        const aspect = window.innerWidth / window.innerHeight;
-        currentAspect = aspect;
-        textCamera = new THREEGL.OrthographicCamera(-aspect, aspect, 1, -1, -10, 10);
+        // ---------- TEXT OVERLAY (WebGL) ----------
+        const textCanvas = document.createElement('canvas');
+        textCanvas.id = 'textCanvas';
+        document.body.appendChild(textCanvas);
+
+        const textCamera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, -10, 10);
         textCamera.position.z = 1;
 
-        textScene = new THREEGL.Scene();
-        textScene.background = null;
+        const textScene = new THREE.Scene();
 
-        glRenderer = new THREEGL.WebGLRenderer({ antialias: true, alpha: true, canvas: textCanvas });
-        glRenderer.setPixelRatio(window.devicePixelRatio);
-        glRenderer.setSize(window.innerWidth, window.innerHeight);
-        glRenderer.setClearColor(0x000000, 0);
+        const textRenderer = new THREE.WebGLRenderer({ 
+          antialias: true, 
+          alpha: true, 
+          canvas: textCanvas 
+        });
+        textRenderer.setPixelRatio(window.devicePixelRatio);
+        textRenderer.setSize(window.innerWidth, window.innerHeight);
+        textRenderer.setClearColor(0x000000, 0);
 
-        // Materials: solid white, no depth test to avoid z-fighting
-        const fillMat = new THREEGL.MeshBasicMaterial({ color: 0xffffff, side: THREEGL.DoubleSide, depthTest: false });
-        const strokeMat = new THREEGL.MeshBasicMaterial({ color: 0xffffff, side: THREEGL.DoubleSide, depthTest: false });
+        console.log('Text renderer created');
 
-        const font = await loadZippedTypeface(
-          'fonts/MPLUSRounded1c/MPLUSRounded1c-Regular.typeface.json.zip',
-          'MPLUSRounded1c-Regular.typeface.json'
-        );
+        // Resume layer
+        const resumeLayer = document.createElement('div');
+        resumeLayer.id = 'resumeLayer';
+        resumeLayer.innerHTML = `<div class="resume-content"></div>`;
+        document.body.appendChild(resumeLayer);
+        const resumeContent = resumeLayer.querySelector('.resume-content');
+        
+        const showResumeLayer = () => {
+          resumeLayer.scrollTop = 0;
+          resumeLayer.classList.add('visible');
+        };
+        
+        const hideResumeLayer = () => resumeLayer.classList.remove('visible');
+        
+        resumeLayer.addEventListener('click', (event) => {
+          if (event.target === resumeLayer) hideResumeLayer();
+        });
+        
+        window.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') hideResumeLayer();
+        });
 
-        // Font sizes: Pedro Pita = H1, Studio/Resume/Email = H2
+        // Scroll tracking for resume
+        let scrollAccumulator = 0;
+        const scrollThreshold = 100;
+
+        window.addEventListener('wheel', (event) => {
+          if (resumeLayer.classList.contains('visible')) {
+            // If resume is visible, only hide on scroll up at top
+            if (resumeLayer.scrollTop <= 0 && event.deltaY < 0) {
+              event.preventDefault();
+              hideResumeLayer();
+              scrollAccumulator = 0;
+            }
+          } else {
+            // If resume is hidden, show on scroll down
+            scrollAccumulator += event.deltaY;
+            
+            if (scrollAccumulator > scrollThreshold) {
+              showResumeLayer();
+              scrollAccumulator = 0;
+            } else if (scrollAccumulator < -scrollThreshold) {
+              scrollAccumulator = 0;
+            }
+          }
+        }, { passive: false });
+
+        // Load resume content
+        const loadResumeContent = async () => {
+          if (!resumeContent) return;
+          try {
+            const response = await fetch('./resume/index.html');
+            if (!response.ok) throw new Error('Failed to fetch resume');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const source = doc.querySelector('.content-wrapper') || doc.body;
+            if (!source) {
+              resumeContent.textContent = 'Resume content unavailable.';
+              return;
+            }
+            source.querySelectorAll('script, style, link, meta, canvas').forEach((node) => node.remove());
+            
+            // Remove all inline styles that might override fonts
+            source.querySelectorAll('[style]').forEach((node) => {
+              const style = node.getAttribute('style');
+              if (style && (style.includes('font-family') || style.includes('font'))) {
+                // Remove font-related inline styles
+                const newStyle = style.split(';')
+                  .filter(rule => !rule.trim().toLowerCase().includes('font'))
+                  .join(';');
+                if (newStyle.trim()) {
+                  node.setAttribute('style', newStyle);
+                } else {
+                  node.removeAttribute('style');
+                }
+              }
+            });
+            
+            // Force Roboto Mono on all text elements
+            resumeContent.innerHTML = source.innerHTML;
+            
+            // Apply Roboto Mono to all elements after loading
+            resumeContent.querySelectorAll('*').forEach((el) => {
+              el.style.fontFamily = "'Roboto Mono', monospace";
+            });
+          } catch (error) {
+            resumeContent.textContent = 'Unable to load resume.';
+          }
+        };
+        loadResumeContent();
+
+        // Load font and create text
+        console.log('Loading font...');
+        const response = await fetch('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/fonts/helvetiker_regular.typeface.json');
+        const fontData = await response.json();
+        const font = new Font(fontData);
+        console.log('Font loaded');
+
+        const fillMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, depthTest: false });
+        const strokeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, depthTest: false });
+
         const responsiveScale = Math.min(1, Math.max(window.innerWidth / 900, 0.65));
-        const H1 = 0.10 * responsiveScale;   // Pedro Pita
-        const H2 = 0.04 * responsiveScale;   // Studio, Resume, Email
+        const H1 = 0.10 * responsiveScale;
+        const H2 = 0.04 * responsiveScale;
 
         const wordSpecs = [
           { text: 'Pedro', height: H1 },
@@ -467,82 +428,131 @@ const computeTexture = Fn(({ storageTexture, uTime, uMouse, uAspect }) => {
           { text: 'Resume', height: H2, action: 'resume' },
           { text: 'hello@pedropita.dev', height: H2, url: 'mailto:hello@pedropita.dev' }
         ];
-        const horizontalLimit = Math.max(aspect * 0.65 * responsiveScale, 0.35);
-        const verticalLimit = Math.min(0.85, 0.65 + responsiveScale * 0.3);
-        const placementPadding = 0.05 + (1 - responsiveScale) * 0.08;
-        const placementAttempts = 120;
 
-        function overlapsCandidate(x, y, width, height, existing) {
-          const bounds = existing.userData.bounds;
-          if (!bounds) return false;
-          const halfWidth = (width + bounds.width) / 2 + placementPadding;
-          const halfHeight = (height + bounds.height) / 2 + placementPadding;
-          return Math.abs(x - existing.position.x) < halfWidth && Math.abs(y - existing.position.y) < halfHeight;
+        const WHITE = new THREE.Color(0xffffff);
+        const ACCENT = new THREE.Color(0x00e5ff);
+        const clickables = [];
+        const draggableWords = [];
+        let lastHover = null;
+
+        function makeStrokeText(font, text, targetHeight, fillMat, strokeMat) {
+          const baseSize = 100;
+          const shapes = font.generateShapes(text, baseSize);
+
+          const geom = new THREE.ShapeGeometry(shapes);
+          geom.computeBoundingBox();
+          const bb = geom.boundingBox;
+
+          const xMid = -0.5 * (bb.max.x - bb.min.x);
+          const yMid = -0.5 * (bb.max.y - bb.min.y);
+          geom.translate(xMid, yMid, 0);
+
+          const group = new THREE.Group();
+
+          const fill = new THREE.Mesh(geom, fillMat);
+          fill.material.depthTest = false;
+          fill.material.depthWrite = false;
+          fill.renderOrder = 1;
+          group.add(fill);
+
+          const holeShapes = [];
+          for (let i = 0; i < shapes.length; i++) {
+            const s = shapes[i];
+            if (s.holes && s.holes.length) holeShapes.push(...s.holes);
+          }
+          shapes.push(...holeShapes);
+
+          const strokeWidth = 5;
+          const style = SVGLoader.getStrokeStyle(strokeWidth, '#ffffff');
+
+          for (let i = 0; i < shapes.length; i++) {
+            const pts = shapes[i].getPoints();
+            const g = SVGLoader.pointsToStroke(pts, style);
+            g.translate(xMid, yMid, 0);
+            const strokeMesh = new THREE.Mesh(g, strokeMat);
+            strokeMesh.material.depthTest = false;
+            strokeMesh.material.depthWrite = false;
+            strokeMesh.renderOrder = 2;
+            group.add(strokeMesh);
+          }
+
+          const ascender = bb.max.y;
+          const baseline = Math.max(bb.min.y, 0);
+          const capHeight = Math.max(ascender - baseline, 0.001);
+          const scale = targetHeight / capHeight;
+          group.scale.set(scale, scale, 1);
+
+          const widthWorld = (bb.max.x - bb.min.x) * scale;
+          const worldHeight = (bb.max.y - bb.min.y) * scale;
+
+          const hitboxGeom = new THREE.PlaneGeometry(widthWorld + 0.1, worldHeight + 0.1);
+          const hitboxMat = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            depthTest: false
+          });
+          const hitbox = new THREE.Mesh(hitboxGeom, hitboxMat);
+          hitbox.renderOrder = 0;
+          group.add(hitbox);
+
+          group.userData.bounds = { width: widthWorld, height: worldHeight };
+          group.userData.getMeshes = () => group.children;
+          return group;
         }
 
-        function findSpawnPosition(width, height) {
-          const marginX = width / 2 + placementPadding;
-          const marginY = height / 2 + placementPadding;
-          const baseHorizontalSpan = Math.min(horizontalLimit, aspect);
-          const randomLimitX = Math.max(baseHorizontalSpan - marginX, 0.1);
-          const randomLimitY = Math.max(verticalLimit - marginY, 0.1);
-          const viewLimitX = Math.max(aspect - marginX, marginX);
-          const viewLimitY = Math.max(1 - marginY, marginY);
+        // Random word placement with no overlaps
+        let currentAspect = aspect;
+        const padding = 0.1;
+        const maxAttempts = 100;
 
-          for (let attempt = 0; attempt < placementAttempts; attempt++) {
-            const xCandidate = (Math.random() * 2 - 1) * randomLimitX;
-            const yCandidate = (Math.random() * 2 - 1) * randomLimitY;
-            const x = clampToRange(xCandidate, viewLimitX);
-            const y = clampToRange(yCandidate, viewLimitY);
-            let blocked = false;
-            for (const existing of draggableWords) {
-              if (overlapsCandidate(x, y, width, height, existing)) {
-                blocked = true;
-                break;
-              }
+        function isOverlapping(x, y, width, height, existingWords) {
+          for (const word of existingWords) {
+            const bounds = word.userData.bounds;
+            const dx = Math.abs(x - word.position.x);
+            const dy = Math.abs(y - word.position.y);
+            const minDistX = (width + bounds.width) / 2 + padding;
+            const minDistY = (height + bounds.height) / 2 + padding;
+            
+            if (dx < minDistX && dy < minDistY) {
+              return true;
             }
-            if (!blocked) return { x, y };
           }
+          return false;
+        }
 
-          const fallbackScaleX = 0.5 + responsiveScale * 0.5;
-          const fallbackScaleY = 0.4 + responsiveScale * 0.5;
-          const fallbackOffsets = [
-            { x: 0, y: 0 },
-            { x: -0.5, y: 0.3 },
-            { x: 0.5, y: 0.3 },
-            { x: -0.5, y: -0.3 },
-            { x: 0.5, y: -0.3 },
-            { x: -0.7, y: 0 },
-            { x: 0.7, y: 0 },
-            { x: 0, y: -0.5 }
-          ].map((entry) => ({
-            x: entry.x * fallbackScaleX,
-            y: entry.y * fallbackScaleY
-          }));
-          for (const offset of fallbackOffsets) {
-            const x = clampToRange(offset.x * randomLimitX, viewLimitX);
-            const y = clampToRange(offset.y * randomLimitY, viewLimitY);
-            let blocked = false;
-            for (const existing of draggableWords) {
-              if (overlapsCandidate(x, y, width, height, existing)) {
-                blocked = true;
-                break;
-              }
+        function findRandomPosition(width, height, existingWords) {
+          const marginX = width / 2 + padding;
+          const marginY = height / 2 + padding;
+          const maxX = currentAspect - marginX;
+          const maxY = 1 - marginY;
+          
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const x = (Math.random() * 2 - 1) * maxX;
+            const y = (Math.random() * 2 - 1) * maxY;
+            
+            if (!isOverlapping(x, y, width, height, existingWords)) {
+              return { x, y };
             }
-            if (!blocked) return { x, y };
           }
-
-          const fallbackX = clampToRange(((draggableWords.length % 3) - 1) * 0.3, viewLimitX);
-          const fallbackY = clampToRange(-0.4 + Math.floor(draggableWords.length / 3) * 0.2, viewLimitY);
-          return { x: fallbackX, y: fallbackY };
+          
+          // Fallback: place in grid
+          const col = existingWords.length % 3;
+          const row = Math.floor(existingWords.length / 3);
+          return {
+            x: (col - 1) * 0.5,
+            y: 0.3 - row * 0.3
+          };
         }
 
         for (const spec of wordSpecs) {
-        const hitPadding = spec.url || spec.action ? 0.25 : 0.015;
-        const wordGroup = makeStrokeText(font, spec.text, spec.height, fillMat.clone(), strokeMat.clone(), hitPadding);
+          const wordGroup = makeStrokeText(font, spec.text, spec.height, fillMat.clone(), strokeMat.clone());
+          
+          const bounds = wordGroup.userData.bounds;
+          const { x, y } = findRandomPosition(bounds.width, bounds.height, draggableWords);
+          
+          wordGroup.position.set(x, y, 0);
           wordGroup.userData.isDraggableWord = true;
 
-          // If it has a URL or action, it's also a clickable link
           if (spec.url || spec.action) {
             if (spec.url) wordGroup.userData.url = spec.url;
             if (spec.action) wordGroup.userData.action = spec.action;
@@ -558,261 +568,158 @@ const computeTexture = Fn(({ storageTexture, uTime, uMouse, uAspect }) => {
             clickables.push(wordGroup);
           }
 
-          const bounds = wordGroup.userData.bounds ?? { width: Math.max(spec.text.length * 0.09, 0.2), height: spec.height };
-          const { x, y } = findSpawnPosition(bounds.width, bounds.height);
-          wordGroup.position.set(x, y, 0);
           draggableWords.push(wordGroup);
           textScene.add(wordGroup);
         }
 
-        window.addEventListener('pointermove', onPointerMove);
-        window.addEventListener('pointerdown', onPointerDown);
-        window.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('pointercancel', onPointerUp);
-        window.addEventListener('click', onClick);
-        window.addEventListener('resize', onResize);
-      }
+        console.log('Text created, words:', draggableWords.length);
 
-      // ---------- Text helpers ----------
-      async function loadZippedTypeface(zipPath, jsonName) {
-        const buf = await new THREEGL.FileLoader().setResponseType('arraybuffer').loadAsync(zipPath);
-        const zip = unzipSync(new Uint8Array(buf));
-        const json = strFromU8(new Uint8Array(zip[jsonName].buffer));
-        return new Font(JSON.parse(json));
-      }
+        // Interaction
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2(-10, -10);
+        let dragTarget = null;
+        let dragOffset = new THREE.Vector2();
+        let dragMoved = false;
+        let didDrag = false;
 
-      function makeStrokeText(font, text, targetHeight, fillMat, strokeMat, hitboxPadding = 0.015) {
-        // Build at a big base size for precision
-        const baseSize = 100;
-        const shapes = font.generateShapes(text, baseSize, 'ltr');
-
-        // --- Fill geometry ---
-        const geom = new THREEGL.ShapeGeometry(shapes);
-        geom.computeBoundingBox();
-        const bb = geom.boundingBox;
-
-        // center the text around (0,0)
-        const xMid = -0.5 * (bb.max.x - bb.min.x);
-        const yMid = -0.5 * (bb.max.y - bb.min.y);
-        geom.translate(xMid, yMid, 0);
-
-        const group = new THREEGL.Group();
-
-        // Solid fill (white), no depth fighting
-        const fill = new THREEGL.Mesh(geom, fillMat);
-        fill.material.depthTest = false;
-        fill.material.depthWrite = false;
-        fill.renderOrder = 1;
-        group.add(fill);
-
-        // --- Stroke geometry (outlines) ---
-        const holeShapes = [];
-        for (let i = 0; i < shapes.length; i++) {
-          const s = shapes[i];
-          if (s.holes && s.holes.length) holeShapes.push(...s.holes);
-        }
-        shapes.push(...holeShapes);
-
-        const strokeWidth = 5; // tweak (2–8)
-        const style = SVGLoader.getStrokeStyle(strokeWidth, '#ffffff');
-
-        for (let i = 0; i < shapes.length; i++) {
-          const pts = shapes[i].getPoints();
-          const g = SVGLoader.pointsToStroke(pts, style);
-          g.translate(xMid, yMid, 0);
-          const strokeMesh = new THREEGL.Mesh(g, strokeMat);
-          strokeMesh.material.depthTest = false;
-          strokeMesh.material.depthWrite = false;
-          strokeMesh.renderOrder = 2;
-          group.add(strokeMesh);
+        function syncPointer(e) {
+          const rect = textCanvas.getBoundingClientRect();
+          pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         }
 
-        // --- Correct scaling ---
-        const ascender = bb.max.y;
-        const baseline = Math.max(bb.min.y, 0);
-        const capHeight = Math.max(ascender - baseline, 0.001);
-        const scale = targetHeight / capHeight;
-        group.scale.set(scale, scale, 1);
+        function clampPosition(word) {
+          const bounds = word.userData.bounds;
+          const maxX = currentAspect - bounds.width / 2 - padding;
+          const maxY = 1 - bounds.height / 2 - padding;
+          word.position.x = Math.max(-maxX, Math.min(maxX, word.position.x));
+          word.position.y = Math.max(-maxY, Math.min(maxY, word.position.y));
+        }
 
-        const widthWorld = (bb.max.x - bb.min.x) * scale;
-        const worldHeight = (bb.max.y - bb.min.y) * scale;
+        window.addEventListener('pointermove', (e) => {
+          syncPointer(e);
 
-        // Add invisible bounding box plane for easier touch/click detection
-        // hitboxPadding provided per word; clickable terms get larger targets
-        const hitboxGeom = new THREEGL.PlaneGeometry(
-          widthWorld + hitboxPadding * 2,
-          worldHeight + hitboxPadding * 2
-        );
-        const hitboxMat = new THREEGL.MeshBasicMaterial({
-          transparent: true,
-          opacity: 0,
-          depthTest: false,
-          depthWrite: false
+          if (dragTarget) {
+            dragMoved = true;
+            const worldX = pointer.x * currentAspect;
+            const worldY = pointer.y;
+            dragTarget.position.x = worldX - dragOffset.x;
+            dragTarget.position.y = worldY - dragOffset.y;
+            clampPosition(dragTarget);
+            return;
+          }
+
+          raycaster.setFromCamera(pointer, textCamera);
+          const meshes = [];
+          for (const obj of clickables) meshes.push(...obj.userData.getMeshes());
+          const hits = raycaster.intersectObjects(meshes, false);
+
+          let hoverGroup = null;
+          if (hits.length) {
+            let node = hits[0].object;
+            while (node && node.parent) {
+              if (node.userData?.isLink) { hoverGroup = node; break; }
+              if (node.parent.userData?.isLink) { hoverGroup = node.parent; break; }
+              node = node.parent;
+            }
+          }
+
+          if (hoverGroup !== lastHover) {
+            if (lastHover) lastHover.userData.setHover(false);
+            if (hoverGroup) hoverGroup.userData.setHover(true);
+            lastHover = hoverGroup || null;
+            document.body.classList.toggle('hover-link', !!lastHover);
+          }
         });
-        const hitbox = new THREEGL.Mesh(hitboxGeom, hitboxMat);
-        hitbox.renderOrder = 0;
-        hitbox.userData.isHitbox = true;
-        group.add(hitbox);
 
-        group.userData.bounds = { width: widthWorld, height: worldHeight };
-        group.userData.getMeshes = () => group.children;
-        return group;
-      }
-
-      function place(group, x, y) {
-        group.position.set(x, y, 0);
-      }
-
-      // ---------- Interaction ----------
-      function syncPointerFromEvent(e) {
-        const rect = textCanvas.getBoundingClientRect();
-        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        pointerWorld.set(pointer.x * currentAspect, pointer.y);
-      }
-
-      function onPointerMove(e) {
-        // existing text interactions
-        syncPointerFromEvent(e);
-
-        if (dragTarget) {
-          dragMoved = true;
-          const newX = pointerWorld.x - dragOffset.x;
-          const newY = pointerWorld.y - dragOffset.y;
-          const bounds = dragTarget.userData.bounds || { width: 0, height: 0 };
-          const padding = 0.05;
-          const limitX = Math.max(currentAspect - bounds.width / 2 - padding, 0);
-          const limitY = Math.max(1 - bounds.height / 2 - padding, 0);
-          const clampedX = clampToRange(newX, limitX);
-          const clampedY = clampToRange(newY, limitY);
-          dragTarget.position.set(clampedX, clampedY, 0);
-          return;
-        }
-
-        raycaster.setFromCamera(pointer, textCamera);
-
-        const meshes = [];
-        for (const obj of clickables) meshes.push(...obj.userData.getMeshes());
-
-        const hits = raycaster.intersectObjects(meshes, false);
-        let hoverGroup = null;
-
-        if (hits.length) {
-          let node = hits[0].object;
-          while (node && node.parent) {
-            if (node.userData?.isLink) { hoverGroup = node; break; }
-            if (node.parent.userData?.isLink) { hoverGroup = node.parent; break; }
-            node = node.parent;
-          }
-        }
-
-        if (hoverGroup !== lastHover) {
-          if (lastHover) lastHover.userData.setHover(false);
-          if (hoverGroup) hoverGroup.userData.setHover(true);
-          lastHover = hoverGroup || null;
-          document.body.classList.toggle('hover-link', !!lastHover);
-        }
-      }
-
-      function findDraggableGroup(node) {
-        while (node) {
-          if (node.userData?.isDraggableWord) return node;
-          node = node.parent;
-        }
-        return null;
-      }
-
-      function onPointerDown(e) {
-        didDrag = false;
-        syncPointerFromEvent(e);
-
-        const meshes = [];
-        for (const word of draggableWords) meshes.push(...word.userData.getMeshes());
-        if (!meshes.length) return;
-
-        raycaster.setFromCamera(pointer, textCamera);
-        const hits = raycaster.intersectObjects(meshes, false);
-        if (!hits.length) return;
-
-        const target = findDraggableGroup(hits[0].object);
-        if (!target) return;
-
-        dragTarget = target;
-        dragOffset.set(pointerWorld.x - target.position.x, pointerWorld.y - target.position.y);
-        dragMoved = false;
-      }
-
-      function onPointerUp() {
-        didDrag = dragMoved;
-        dragTarget = null;
-        dragMoved = false;
-      }
-
-      function onClick() {
-        if (didDrag) {
+        window.addEventListener('pointerdown', (e) => {
+          syncPointer(e);
           didDrag = false;
-          return;
-        }
-        if (!lastHover) return;
-        const { url, action } = lastHover.userData;
-        if (action === 'resume') {
-          showResumeLayer();
-          return;
-        }
-        if (url) window.open(url, '_blank', 'noopener');
-      }
-
-      // ---------- Resize / Render loop ----------
-      function onResize() {
-        const w = window.innerWidth, h = window.innerHeight;
-        const aspect = w / h;
-        currentAspect = aspect;
-
-        // BG
-        if (hasWebGPU && gpuRenderer && bgCamera && bgPlane) {
-          gpuRenderer.setSize(w, h);
-          bgCamera.left = -aspect;
-          bgCamera.right = aspect;
-          bgCamera.updateProjectionMatrix();
-          bgPlane.scale.set(aspect, 1, 1);
-          uAspect.value = aspect; // keep plasma round-ish across aspect ratios
-        }
-
-        // Text
-        if (glRenderer && textCamera) {
-          glRenderer.setSize(w, h);
-          textCamera.left = -aspect;
-          textCamera.right = aspect;
-          textCamera.updateProjectionMatrix();
-        }
-
-        if (draggableWords.length) {
-          const padding = 0.05;
-          for (const word of draggableWords) {
-            const bounds = word.userData.bounds || { width: 0, height: 0 };
-            const limitX = Math.max(currentAspect - bounds.width / 2 - padding, 0);
-            const limitY = Math.max(1 - bounds.height / 2 - padding, 0);
-            word.position.x = clampToRange(word.position.x, limitX);
-            word.position.y = clampToRange(word.position.y, limitY);
+          
+          raycaster.setFromCamera(pointer, textCamera);
+          const meshes = [];
+          for (const word of draggableWords) meshes.push(...word.userData.getMeshes());
+          const hits = raycaster.intersectObjects(meshes, false);
+          
+          if (hits.length) {
+            let node = hits[0].object;
+            while (node && node.parent) {
+              if (node.userData?.isDraggableWord) { 
+                dragTarget = node;
+                const worldX = pointer.x * currentAspect;
+                const worldY = pointer.y;
+                dragOffset.set(worldX - dragTarget.position.x, worldY - dragTarget.position.y);
+                dragMoved = false;
+                break;
+              }
+              node = node.parent;
+            }
           }
+        });
+
+        window.addEventListener('pointerup', () => {
+          didDrag = dragMoved;
+          dragTarget = null;
+          dragMoved = false;
+        });
+
+        window.addEventListener('click', () => {
+          if (didDrag) {
+            didDrag = false;
+            return;
+          }
+          if (!lastHover) return;
+          const { url, action } = lastHover.userData;
+          if (action === 'resume') {
+            showResumeLayer();
+          } else if (url) {
+            window.open(url, '_blank', 'noopener');
+          }
+        });
+
+        // Resize
+        window.addEventListener('resize', () => {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+          const newAspect = w / h;
+          currentAspect = newAspect;
+
+          bgRenderer.setSize(w, h);
+          bgCamera.left = -newAspect;
+          bgCamera.right = newAspect;
+          bgCamera.updateProjectionMatrix();
+          bgPlane.scale.set(newAspect, 1, 1);
+          shaderMaterial.uniforms.uAspect.value = newAspect;
+
+          textRenderer.setSize(w, h);
+          textCamera.left = -newAspect;
+          textCamera.right = newAspect;
+          textCamera.updateProjectionMatrix();
+
+          // Re-clamp all words to new bounds
+          for (const word of draggableWords) {
+            clampPosition(word);
+          }
+        });
+
+        // Animation loop
+        console.log('Starting animation loop');
+        function animate(t = 0) {
+          shaderMaterial.uniforms.uTime.value = t * 0.001;
+          
+          bgRenderer.render(bgScene, bgCamera);
+          textRenderer.render(textScene, textCamera);
+          
+          requestAnimationFrame(animate);
         }
-      }
+        
+        animate();
+        console.log('Animation started successfully');
 
-      function animate(t = 0) {
-        // uniforms update
-        uTime.value = t * 0.001;
-
-        // smooth mouse (lerp)
-        const lerp = (a, b, s) => a + (b - a) * s;
-        uMouse.value.x = lerp(uMouse.value.x, targetMouse.x, 0.15);
-        uMouse.value.y = lerp(uMouse.value.y, targetMouse.y, 0.15);
-
-        // compute every frame, then render both layers
-        if (hasWebGPU && gpuRenderer && computeNode) gpuRenderer.compute(computeNode);
-        if (hasWebGPU && gpuRenderer && bgScene && bgCamera) gpuRenderer.render(bgScene, bgCamera);
-        if (glRenderer && textScene && textCamera) glRenderer.render(textScene, textCamera);
-
-        requestAnimationFrame(animate);
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Critical Error: ' + error.message;
+        console.error('Critical error:', error);
       }
     </script>
   </body>
