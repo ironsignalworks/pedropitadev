@@ -17,7 +17,7 @@
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#000000" />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pedropita.dev/resume/">
     <meta property="og:title" content="Pedro Pita — Creative Technologist & Web Developer">
@@ -61,9 +61,9 @@
     <style>
       :root {
         color-scheme: dark;
-        --home-scheme-color-h1: #00e5ff;
-        --home-scheme-color-h2: #00e5ff;
+        --resume-fallback-accent: #00e5ff;
       }
+
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body {
         min-height: 100%;
@@ -71,10 +71,11 @@
         color: #eef3ff;
         font-family: 'Roboto Mono', monospace;
         line-height: 1.6;
+        -webkit-text-size-adjust: 100%;
       }
       body {
         padding: 3rem 1.5rem 4rem;
-        background-image: none;
+        background-image: none; /* ensure solid black */
       }
       .page { max-width: 960px; margin: 0 auto; }
 
@@ -90,12 +91,12 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
         background: rgba(255, 255, 255, 0.05);
         color: #eef3ff;
-        font-family: 'Roboto Mono', monospace;
         font-size: 0.95rem;
         padding: 0.4rem 0.85rem;
         border-radius: 999px;
         cursor: pointer;
         transition: border-color 0.2s, transform 0.08s, background 0.2s;
+        touch-action: manipulation;
       }
       .btn:hover {
         border-color: rgba(255, 255, 255, 0.45);
@@ -106,17 +107,16 @@
       h1 {
         font-size: 2.4rem;
         margin-bottom: 0.35rem;
-        color: var(--home-scheme-color-h1);
+        color: var(--accent, var(--resume-fallback-accent));
         letter-spacing: 0.02em;
+        transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       }
       h2 {
         margin-top: 2rem;
         margin-bottom: 0.75rem;
-        color: var(--home-scheme-color-h2);
-        break-after: avoid-page;
-      }
-      h1, h2 {
+        color: var(--accent, var(--resume-fallback-accent));
         transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        break-after: avoid-page;
       }
       p {
         margin-bottom: 1rem;
@@ -133,8 +133,18 @@
         color: rgba(226, 232, 240, 0.8);
         margin-bottom: 1rem;
       }
-      a { color: #fcd1a8; text-decoration: none; }
-      a:hover { opacity: 0.8; }
+
+      /* Link styling + mobile-tap friendliness */
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        pointer-events: auto;
+        padding-inline: 2px; /* a bit more tap target */
+        -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+        touch-action: manipulation;
+      }
+      a:hover { opacity: 0.9; text-decoration: underline; }
+      a:active { opacity: 1; }
 
       /* Hide actions when URL has ?clean=1 (set via JS) */
       .clean .actions { display: none !important; }
@@ -146,7 +156,7 @@
         body { padding: 0; }
         .page { max-width: 100%; padding: 0; }
         .actions { display: none !important; }
-        h1, h2 { color: #000; }
+        h1, h2 { color: #000 !important; }
         a { color: #000; text-decoration: underline; }
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -173,6 +183,7 @@
         Studio: <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> |
         GitHub: <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">github.com/IronSignalWorks</a>
       </p>
+      <p>Languages: Portuguese (Native), English (C2)</p>
 
       <h2>Summary</h2>
       <p>
@@ -201,17 +212,11 @@
         <li>Enhanced fraud-detection review flows to reduce manual review time and increase data accuracy.</li>
       </ul>
 
-      <p><strong>TV Record Europa — Live Broadcast Operator (2018–2021)</strong></p>
-      <ul>
-        <li>Produced and edited live broadcast packages; maintained on-air reliability under tight deadlines.</li>
-        <li>Managed cross-platform delivery and media library workflows.</li>
-      </ul>
-
       <p><strong>Iron Signal Works — Independent Studio (2024–Present)</strong></p>
       <ul>
         <li>Built browser games, interactive interfaces, and immersive audio systems.</li>
-        <li><strong>Released 7+ prototypes</strong> integrating React, WebGL, and custom audio engines.</li>
-        <li><em>Selected links:</em> <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">Work</a> • <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a></li>
+        <li><strong>Released 10+ games and prototypes</strong> integrating React, WebGL, and custom audio engines.</li>
+        <li><em>Selected links:</em> <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">Studio</a> • <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a></li>
       </ul>
 
       <h2>Audio &amp; Interactive Systems</h2>
@@ -222,12 +227,9 @@
 
       <h2>Education</h2>
       <p>Faculdade de Letras da Universidade de Coimbra (FLUC) — Estudos Artísticos: Cinema</p>
+      <p>Additional Training (On-the-Job Technical) — Python (Data) · SQL · Git · Jira · Notion · Confluence · Power BI</p>
 
-      <h2>Additional Training</h2>
-      <p>On-the-Job Technical — Python (Data) · SQL · Git · Jira · Notion · Confluence · Power BI</p>
-
-      <h2>Languages</h2>
-      <p>Portuguese (Native), English (C2)</p>
+ 
     </main>
 
     <script>
@@ -239,26 +241,22 @@
         }
       })();
 
-      // Download: print dialog (buttons auto-hidden by @media print)
+      // Download: print dialog
       document.getElementById('downloadBtn')?.addEventListener('click', () => {
         window.print();
       });
 
-      // Share: prefer Web Share API with a clean link; fallback copies clean link
+      // Share: prefer Web Share API; fallback copy
       document.getElementById('shareBtn')?.addEventListener('click', async (e) => {
         const url = new URL(window.location.href);
-        url.searchParams.set('clean', '1'); // share a clean, button-less view
-
+        url.searchParams.set('clean', '1'); // share a clean view
         const shareData = {
           title: 'Pedro Pita — Resume',
           text: 'Resume — Creative Technologist & Web Developer',
           url: url.toString()
         };
-
         if (navigator.share) {
-          try {
-            await navigator.share(shareData);
-          } catch {}
+          try { await navigator.share(shareData); } catch {}
         } else if (navigator.clipboard && window.isSecureContext) {
           try {
             await navigator.clipboard.writeText(shareData.url);
@@ -273,112 +271,37 @@
           window.prompt('Copy this URL:', shareData.url);
         }
       });
-    </script>
-    <script>
-      (function () {
-        const DEFAULT_ACCENT = '#00e5ff';
-        const ACCENT_REGEX = /--accent:\s*(#[0-9a-fA-F]{6})/;
-        const CANDIDATE_URLS = ['../index.html', '/index.html', '/'];
 
-        async function fetchHomepageAccent() {
-          for (const url of CANDIDATE_URLS) {
-            try {
-              const response = await fetch(url, { cache: 'no-store' });
-              if (!response.ok) continue;
-              const html = await response.text();
-              const match = ACCENT_REGEX.exec(html);
-              if (match) return match[1];
-            } catch {
-              // ignore
-            }
-          }
-          return null;
-        }
+      // Mobile link reliability: ensure taps navigate (iOS/Safari quirks)
+      function reinforceAnchors() {
+        document.querySelectorAll('a[href]').forEach(a => {
+          // No-op if already handled
+          if (a.dataset.touchBound) return;
+          a.dataset.touchBound = '1';
 
-        function hexToRgb(hex) {
-          const normalized = hex.replace('#', '');
-          const value = parseInt(normalized, 16);
-          return {
-            r: (value >> 16) & 0xff,
-            g: (value >> 8) & 0xff,
-            b: value & 0xff
-          };
-        }
+          const href = a.getAttribute('href');
+          const isBlank = a.target === '_blank';
 
-        function rgbToHsl(r, g, b) {
-          r /= 255;
-          g /= 255;
-          b /= 255;
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const delta = max - min;
-          let h = 0;
-          let s = 0;
-          const l = (max + min) / 2;
+          a.addEventListener('touchend', (ev) => {
+            // If the browser already navigates, fine; this is a safety net
+            // Defer to allow default; if nothing happens, we force it.
+            setTimeout(() => {
+              // Heuristic: if still on same URL and link was tapped, force it
+              if (document.activeElement === a || true) {
+                try {
+                  if (isBlank) window.open(href, '_blank', 'noopener');
+                  else location.href = href;
+                } catch {
+                  // last resort
+                  location.assign(href);
+                }
+              }
+            }, 0);
+          }, { passive: true });
+        });
+      }
 
-          if (delta) {
-            s = delta / (1 - Math.abs(2 * l - 1));
-            switch (max) {
-              case r:
-                h = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-                break;
-              case g:
-                h = ((b - r) / delta + 2) / 6;
-                break;
-              default:
-                h = ((r - g) / delta + 4) / 6;
-            }
-          }
-
-          return { h, s, l };
-        }
-
-        function hslToRgb(h, s, l) {
-          if (!s) {
-            const light = Math.round(l * 255);
-            return { r: light, g: light, b: light };
-          }
-
-          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-          const p = 2 * l - q;
-          const hue2rgb = (pValue, qValue, t) => {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1 / 6) return pValue + (qValue - pValue) * 6 * t;
-            if (t < 1 / 2) return qValue;
-            if (t < 2 / 3) return pValue + (qValue - pValue) * (2 / 3 - t) * 6;
-            return pValue;
-          };
-
-          return {
-            r: Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
-            g: Math.round(hue2rgb(p, q, h) * 255),
-            b: Math.round(hue2rgb(p, q, h - 1 / 3) * 255)
-          };
-        }
-
-        function rgbToHex({ r, g, b }) {
-          const toHex = (value) => value.toString(16).padStart(2, '0');
-          return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-        }
-
-        function adjustShade(hex, delta) {
-          const { r, g, b } = hexToRgb(hex);
-          const { h, s, l } = rgbToHsl(r, g, b);
-          const adjusted = Math.max(0, Math.min(1, l + delta));
-          return rgbToHex(hslToRgb(h, s, adjusted));
-        }
-
-        async function applyHomepageColors() {
-          const accent = (await fetchHomepageAccent()) || DEFAULT_ACCENT;
-          const h1Delta = 0.08 + Math.random() * 0.08;
-          const h2Delta = -(0.04 + Math.random() * 0.06);
-          document.documentElement.style.setProperty('--home-scheme-color-h1', adjustShade(accent, h1Delta));
-          document.documentElement.style.setProperty('--home-scheme-color-h2', adjustShade(accent, h2Delta));
-        }
-
-        document.addEventListener('DOMContentLoaded', applyHomepageColors);
-      })();
+      reinforceAnchors();
     </script>
   </body>
 </html>

@@ -79,7 +79,7 @@
     
     <style>
       :root {
-        --accent: #00e5ff;
+        --accent: #ffffff;
         --resume-font: 'IBM Plex Sans', 'Helvetica Neue', 'Arial', sans-serif;
       }
       *, *::before, *::after { font-family: 'Roboto', 'Helvetica Neue', 'Arial', sans-serif !important; }
@@ -117,6 +117,8 @@
         color: rgba(255, 255, 255, 0.9);
         font-family: var(--resume-font) !important;
         line-height: 1.6;
+        background: #000;
+        padding: 1.5rem 1.5rem 2rem;
       }
       #resumeLayer .resume-content,
       #resumeLayer .resume-content *::before,
@@ -173,7 +175,7 @@
         font-family: var(--resume-font) !important;
         margin-top: 1.25rem;
         margin-bottom: 0.35rem;
-        color: #00e5ff;
+        color: var(--accent);
         font-weight: 700;
       }
       #resumeLayer .resume-content p,
@@ -188,7 +190,7 @@
         margin-bottom: 1rem;
       }
       #resumeLayer .resume-content a {
-        color: #00e5ff;
+        color: var(--accent);
         font-family: var(--resume-font) !important;
       }
       #resumeLayer::-webkit-scrollbar {
@@ -452,6 +454,7 @@
         resumeLayer.innerHTML = `<div class="resume-content"></div>`;
         document.body.appendChild(resumeLayer);
         const resumeContent = resumeLayer.querySelector('.resume-content');
+
         
         const showResumeLayer = () => {
           resumeLayer.scrollTop = 0;
@@ -545,7 +548,7 @@
               resumeContent.textContent = 'Resume content unavailable.';
               return;
             }
-            source.querySelectorAll('script, style, link, meta, canvas').forEach((node) => node.remove());
+            source.querySelectorAll('script, link, meta, canvas').forEach((node) => node.remove());
             
             // Remove all inline styles that might override fonts
             source.querySelectorAll('[style]').forEach((node) => {
@@ -815,10 +818,11 @@
         // Interaction
           const raycaster = new THREE.Raycaster();
           const pointer = new THREE.Vector2(-10, -10);
-            let dragTarget = null;
-            let dragOffset = new THREE.Vector2();
-            let dragMoved = false;
-            let didDrag = false;
+          let dragTarget = null;
+          let dragOffset = new THREE.Vector2();
+          let dragMoved = false;
+          let didDrag = false;
+          let suppressNextClick = false;
 
           function syncPointer(e) {
             const rect = textCanvas.getBoundingClientRect();
@@ -900,24 +904,40 @@
           }
         });
 
+        function triggerLastHoverAction() {
+          if (!lastHover) return false;
+          const { url, action } = lastHover.userData;
+          if (action === 'resume') {
+            showResumeLayer();
+            return true;
+          }
+          if (url) {
+            window.open(url, '_blank', 'noopener');
+            return true;
+          }
+          return false;
+        }
+
         window.addEventListener('pointerup', () => {
-          didDrag = dragMoved;
+          const wasDragging = dragMoved;
+          didDrag = wasDragging;
           dragTarget = null;
           dragMoved = false;
+          if (!wasDragging && triggerLastHoverAction()) {
+            suppressNextClick = true;
+          }
         });
 
         window.addEventListener('click', () => {
+          if (suppressNextClick) {
+            suppressNextClick = false;
+            return;
+          }
           if (didDrag) {
             didDrag = false;
             return;
           }
-          if (!lastHover) return;
-          const { url, action } = lastHover.userData;
-          if (action === 'resume') {
-            showResumeLayer();
-          } else if (url) {
-            window.open(url, '_blank', 'noopener');
-          }
+          triggerLastHoverAction();
         });
 
         // Resize
