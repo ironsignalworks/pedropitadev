@@ -52,7 +52,7 @@
         "@type": "PostalAddress",
         "addressLocality": "Lisbon",
         "addressCountry": "Portugal"
-      },
+      ],
       "email": "mailto:hello@pedropita.dev",
       "description": "Creative Technologist & Web Developer based in Lisbon, Portugal. Specialized in React, TypeScript, WebGL, and audio-driven interactive systems."
     }
@@ -61,7 +61,8 @@
     <style>
       :root {
         color-scheme: dark;
-        --resume-fallback-accent: #00e5ff;
+        --resume-fallback-accent: #00e5ff; /* used if no accent is discovered */
+        /* optional: define --accent on the host page to override globally */
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -136,7 +137,7 @@
 
       /* Link styling + mobile-tap friendliness */
       a {
-        color: var(--accent);
+        color: var(--accent, var(--resume-fallback-accent));
         text-decoration: none;
         pointer-events: auto;
         padding-inline: 2px; /* a bit more tap target */
@@ -158,8 +159,12 @@
         .actions { display: none !important; }
         h1, h2 { color: #000 !important; }
         a { color: #000; text-decoration: underline; }
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        body * {
+          color: #000 !important;
+          background: transparent !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
       }
     </style>
   </head>
@@ -228,12 +233,71 @@
       <h2>Education</h2>
       <p>Faculdade de Letras da Universidade de Coimbra (FLUC) — Estudos Artísticos: Cinema</p>
       <p>Additional Training (On-the-Job Technical) — Python (Data) · SQL · Git · Jira · Notion · Confluence · Power BI</p>
-
- 
     </main>
 
     <script>
-      // Hide actions if URL has ?clean=1
+      // --- Accent resolver + application ---
+      const clamp255 = n => Math.max(0, Math.min(255, Math.round(n)));
+
+      function hexToRgb(hex) {
+        const m = String(hex).trim().replace('#','').match(/^([0-9a-f]{6}|[0-9a-f]{3})$/i);
+        if (!m) return null;
+        let h = m[1];
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        const num = parseInt(h, 16);
+        return [ (num>>16)&255, (num>>8)&255, num&255 ];
+      }
+
+      function rgbToHex([r,g,b]) {
+        return '#' + [r,g,b].map(v => clamp255(v).toString(16).padStart(2, '0')).join('');
+      }
+
+      function shade(hex, amt) {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex;
+        return rgbToHex(rgb.map(v => v + amt));
+      }
+
+      async function resolveAccent() {
+        // 1) URL param ?accent=#RRGGBB
+        const url = new URL(location.href);
+        const p = url.searchParams.get('accent');
+        if (p && hexToRgb(p)) return p;
+
+        // 2) CSS var --accent (if host/page defines it)
+        const localAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+        if (localAccent && hexToRgb(localAccent)) return localAccent;
+
+        // 3) Fallback: fetch homepage and look for --accent: value;
+        try {
+          const res = await fetch('/', { credentials: 'same-origin' });
+          const html = await res.text();
+          const m = html.match(/--accent\s*:\s*([^;]+);/i);
+          if (m && hexToRgb(m[1].trim())) return m[1].trim();
+        } catch (_) {}
+
+        // 4) Final fallback
+        return getComputedStyle(document.documentElement).getPropertyValue('--resume-fallback-accent').trim() || '#00e5ff';
+      }
+
+      function applyAccent(accent) {
+        // Keep headings vivid on black. Optionally tweak separately:
+        const h1 = shade(accent, +24);
+        const h2 = shade(accent, -12);
+
+        document.documentElement.style.setProperty('--accent', accent);
+        // h1/h2 both read from --accent, but nudging the var can be done if desired.
+        // If you prefer separate vars, swap CSS to --resume-h1/--resume-h2 and set them here:
+        // document.documentElement.style.setProperty('--resume-h1', h1);
+        // document.documentElement.style.setProperty('--resume-h2', h2);
+
+        // Since CSS uses --accent directly, keeping it consistent is enough;
+        // below line optionally brightens headings by directly setting color inline:
+        document.querySelector('h1')?.style.setProperty('color', h1);
+        document.querySelectorAll('h2')?.forEach(el => el.style.setProperty('color', h2));
+      }
+
+      // --- Clean view toggle ---
       (function () {
         const params = new URLSearchParams(location.search);
         if (params.get('clean') === '1') {
@@ -241,12 +305,12 @@
         }
       })();
 
-      // Download: print dialog
+      // --- Download: print dialog ---
       document.getElementById('downloadBtn')?.addEventListener('click', () => {
         window.print();
       });
 
-      // Share: prefer Web Share API; fallback copy
+      // --- Share: Web Share API or copy fallback ---
       document.getElementById('shareBtn')?.addEventListener('click', async (e) => {
         const url = new URL(window.location.href);
         url.searchParams.set('clean', '1'); // share a clean view
@@ -272,36 +336,32 @@
         }
       });
 
-      // Mobile link reliability: ensure taps navigate (iOS/Safari quirks)
+      // --- Mobile link reliability: ensure taps navigate (iOS/Safari quirks) ---
       function reinforceAnchors() {
         document.querySelectorAll('a[href]').forEach(a => {
-          // No-op if already handled
           if (a.dataset.touchBound) return;
           a.dataset.touchBound = '1';
-
           const href = a.getAttribute('href');
           const isBlank = a.target === '_blank';
-
-          a.addEventListener('touchend', (ev) => {
-            // If the browser already navigates, fine; this is a safety net
-            // Defer to allow default; if nothing happens, we force it.
+          a.addEventListener('touchend', () => {
             setTimeout(() => {
-              // Heuristic: if still on same URL and link was tapped, force it
-              if (document.activeElement === a || true) {
-                try {
-                  if (isBlank) window.open(href, '_blank', 'noopener');
-                  else location.href = href;
-                } catch {
-                  // last resort
-                  location.assign(href);
-                }
+              try {
+                if (isBlank) window.open(href, '_blank', 'noopener');
+                else location.href = href;
+              } catch {
+                location.assign(href);
               }
             }, 0);
           }, { passive: true });
         });
       }
 
-      reinforceAnchors();
+      // --- Boot ---
+      (async function start() {
+        reinforceAnchors();
+        const accent = await resolveAccent();
+        applyAccent(accent);
+      })();
     </script>
   </body>
 </html>
