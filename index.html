@@ -813,26 +813,50 @@
         console.log('Text created, words:', draggableWords.length);
 
         // Interaction
-        const raycaster = new THREE.Raycaster();
-        const pointer = new THREE.Vector2(-10, -10);
-        let dragTarget = null;
-        let dragOffset = new THREE.Vector2();
-        let dragMoved = false;
-        let didDrag = false;
+          const raycaster = new THREE.Raycaster();
+          const pointer = new THREE.Vector2(-10, -10);
+            let dragTarget = null;
+            let dragOffset = new THREE.Vector2();
+            let dragMoved = false;
+            let didDrag = false;
 
-        function syncPointer(e) {
-          const rect = textCanvas.getBoundingClientRect();
-          pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-          pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        }
+          function syncPointer(e) {
+            const rect = textCanvas.getBoundingClientRect();
+            pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+          }
 
-        function clampPosition(word) {
-          const bounds = word.userData.bounds;
-          const maxX = currentAspect - bounds.width / 2 - padding;
-          const maxY = 1 - bounds.height / 2 - padding;
-          word.position.x = Math.max(-maxX, Math.min(maxX, word.position.x));
-          word.position.y = Math.max(-maxY, Math.min(maxY, word.position.y));
-        }
+          function updateHoverState() {
+            raycaster.setFromCamera(pointer, textCamera);
+            const meshes = [];
+            for (const obj of clickables) meshes.push(...obj.userData.getMeshes());
+            const hits = raycaster.intersectObjects(meshes, false);
+
+            let hoverGroup = null;
+            if (hits.length) {
+              let node = hits[0].object;
+              while (node && node.parent) {
+                if (node.userData?.isLink) { hoverGroup = node; break; }
+                if (node.parent.userData?.isLink) { hoverGroup = node.parent; break; }
+                node = node.parent;
+              }
+            }
+
+            if (hoverGroup !== lastHover) {
+              if (lastHover) lastHover.userData.setHover(false);
+              if (hoverGroup) hoverGroup.userData.setHover(true);
+              lastHover = hoverGroup || null;
+              document.body.classList.toggle('hover-link', !!lastHover);
+            }
+          }
+
+          function clampPosition(word) {
+            const bounds = word.userData.bounds;
+            const maxX = currentAspect - bounds.width / 2 - padding;
+            const maxY = 1 - bounds.height / 2 - padding;
+            word.position.x = Math.max(-maxX, Math.min(maxX, word.position.x));
+            word.position.y = Math.max(-maxY, Math.min(maxY, word.position.y));
+          }
 
         window.addEventListener('pointermove', (e) => {
           syncPointer(e);
@@ -847,31 +871,12 @@
             return;
           }
 
-          raycaster.setFromCamera(pointer, textCamera);
-          const meshes = [];
-          for (const obj of clickables) meshes.push(...obj.userData.getMeshes());
-          const hits = raycaster.intersectObjects(meshes, false);
-
-          let hoverGroup = null;
-          if (hits.length) {
-            let node = hits[0].object;
-            while (node && node.parent) {
-              if (node.userData?.isLink) { hoverGroup = node; break; }
-              if (node.parent.userData?.isLink) { hoverGroup = node.parent; break; }
-              node = node.parent;
-            }
-          }
-
-          if (hoverGroup !== lastHover) {
-            if (lastHover) lastHover.userData.setHover(false);
-            if (hoverGroup) hoverGroup.userData.setHover(true);
-            lastHover = hoverGroup || null;
-            document.body.classList.toggle('hover-link', !!lastHover);
-          }
+          updateHoverState();
         });
 
         window.addEventListener('pointerdown', (e) => {
           syncPointer(e);
+          updateHoverState();
           didDrag = false;
           
           raycaster.setFromCamera(pointer, textCamera);
