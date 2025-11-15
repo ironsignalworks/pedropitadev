@@ -14,7 +14,7 @@
     <meta name="title" content="Pedro Pita — Creative Technologist & Web Developer">
     <meta name="description" content="Resume of Pedro Pita — Creative Technologist & Web Developer based in Lisbon, Portugal. Specializing in front-end engineering, creative coding, and interactive media. Experienced in React, TypeScript, WebGL, and AI-driven content systems.">
     <meta name="author" content="Pedro Pita">
-    <meta name="robots" content="index, follow">
+        <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#000000" />
 
     <!-- Open Graph -->
@@ -33,6 +33,7 @@
 
     <!-- Canonical -->
     <link rel="canonical" href="https://pedropita.dev/resume/" />
+    <link rel="stylesheet" href="/assets/theme.css">
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -59,39 +60,47 @@
     </script>
 
     <style>
-      :root {
-        color-scheme: dark;
-        --resume-fallback-accent: #00e5ff; /* used if no accent is discovered */
-        /* optional: define --accent on the host page to override globally */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      html, body {
+      html {
+        font-size: var(--font-size);
+        background: var(--color-background);
+        color: var(--color-foreground);
+      }
+
+      body {
         min-height: 100%;
-        background: #000;
-        color: #eef3ff;
+        background: var(--color-background);
+        color: var(--color-foreground);
         font-family: 'Roboto Mono', monospace;
         line-height: 1.6;
         -webkit-text-size-adjust: 100%;
-      }
-      body {
         padding: 3rem 1.5rem 4rem;
-        background-image: none; /* ensure solid black */
+        background-image: none;
       }
-      .page { max-width: 960px; margin: 0 auto; }
 
-      /* Actions (hidden for print/clean) */
+      .page {
+        max-width: 960px;
+        margin: 0 auto;
+        color: var(--color-card-foreground);
+      }
+
       .actions {
         display: flex;
         justify-content: flex-end;
         margin-bottom: 1rem;
         gap: 0.5rem;
       }
+
       .btn {
         appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--color-border);
         background: rgba(255, 255, 255, 0.05);
-        color: #eef3ff;
+        color: var(--color-foreground);
         font-size: 0.95rem;
         padding: 0.4rem 0.85rem;
         border-radius: 999px;
@@ -99,33 +108,46 @@
         transition: border-color 0.2s, transform 0.08s, background 0.2s;
         touch-action: manipulation;
       }
+
       .btn:hover {
         border-color: rgba(255, 255, 255, 0.45);
         background: rgba(255, 255, 255, 0.08);
       }
-      .btn:active { transform: translateY(1px); }
+
+      .btn:active {
+        transform: translateY(1px);
+      }
 
       h1 {
         font-size: 2.4rem;
         margin-bottom: 0.35rem;
-        color: var(--accent, var(--resume-fallback-accent));
+        color: var(--accent, var(--color-accent));
         letter-spacing: 0.02em;
         transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       }
+
       h2 {
         margin-top: 2rem;
         margin-bottom: 0.75rem;
-        color: var(--accent, var(--resume-fallback-accent));
+        color: var(--accent, var(--color-accent));
         transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         break-after: avoid-page;
       }
+
       p {
         margin-bottom: 1rem;
         color: rgba(238, 243, 255, 0.88);
         break-inside: avoid;
       }
-      ul { margin: 0 0 1rem 1.2rem; }
-      li { margin: 0.2rem 0; }
+
+      ul {
+        margin: 0 0 1rem 1.2rem;
+      }
+
+      li {
+        margin: 0.2rem 0;
+      }
+
       .meta {
         display: flex;
         flex-wrap: wrap;
@@ -135,30 +157,64 @@
         margin-bottom: 1rem;
       }
 
-      /* Link styling + mobile-tap friendliness */
       a {
-        color: var(--accent, var(--resume-fallback-accent));
+        color: var(--accent, var(--color-accent));
         text-decoration: none;
         pointer-events: auto;
-        padding-inline: 2px; /* a bit more tap target */
-        -webkit-tap-highlight-color: rgba(255,255,255,0.1);
+        padding-inline: 2px;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
         touch-action: manipulation;
       }
-      a:hover { opacity: 0.9; text-decoration: underline; }
-      a:active { opacity: 1; }
 
-      /* Hide actions when URL has ?clean=1 (set via JS) */
-      .clean .actions { display: none !important; }
+      a:hover {
+        opacity: 0.9;
+        text-decoration: underline;
+      }
 
-      /* Print styles */
+      a:active {
+        opacity: 1;
+      }
+
+      .clean .actions {
+        display: none !important;
+      }
+
       @media print {
-        @page { size: A4; margin: 12mm; }
-        html, body { background: #fff; color: #000; }
-        body { padding: 0; }
-        .page { max-width: 100%; padding: 0; }
-        .actions { display: none !important; }
-        h1, h2 { color: #000 !important; }
-        a { color: #000; text-decoration: underline; }
+        @page {
+          size: A4;
+          margin: 12mm;
+        }
+
+        html,
+        body {
+          background: #fff;
+          color: #000;
+        }
+
+        body {
+          padding: 0;
+        }
+
+        .page {
+          max-width: 100%;
+          padding: 0;
+          color: #000;
+        }
+
+        .actions {
+          display: none !important;
+        }
+
+        h1,
+        h2 {
+          color: #000 !important;
+        }
+
+        a {
+          color: #000;
+          text-decoration: underline;
+        }
+
         body * {
           color: #000 !important;
           background: transparent !important;
@@ -206,7 +262,7 @@
       <h2>Tech Stack</h2>
       <p><strong>Core:</strong> JavaScript · TypeScript · React · Node.js · Vite · Tailwind · Three.js · REST APIs</p>
       <p><strong>Creative &amp; Audio:</strong> WebGL · WebAudio · Max/MSP · p5.js · Ableton Live · OBS Studio</p>
-      <p><strong>Also:</strong> WordPress · SQL · Python (Data) · Adobe CC · Figma</p>
+      <p><strong>Also:</strong> SQL · Python (Data) · Adobe CC · Figma</p>
 
       <h2>Experience</h2>
 
@@ -232,7 +288,7 @@
 
       <h2>Education</h2>
       <p>Faculdade de Letras da Universidade de Coimbra (FLUC) — Estudos Artísticos: Cinema</p>
-      <p>Additional Training (On-the-Job Technical) — Python (Data) · SQL · Git · Jira · Notion · Confluence · Power BI</p>
+      <p>Additional Training (On-the-Job Technical) — Python (Data) · SQL · Git · Jira · Power BI</p>
     </main>
 
     <script>
