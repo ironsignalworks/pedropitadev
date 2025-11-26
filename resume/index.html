@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pedro Pita — Resume</title>
+    <title>Pedro Pita Resume</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <!-- Primary Meta Tags -->
-    <meta name="title" content="Pedro Pita — Creative Technologist & Web Developer">
-    <meta name="description" content="Resume of Pedro Pita — Creative Technologist & Web Developer based in Lisbon, Portugal. Specializing in front-end engineering, creative coding, and interactive media. Experienced in React, TypeScript, WebGL, and AI-driven content systems.">
+    <meta name="title" content="Pedro Pita - Creative Technologist & Web Developer">
+    <meta name="description" content="Resume of Pedro Pita - Creative Technologist & Web Developer based in Lisbon, Portugal. Specializing in front-end engineering, creative coding, and interactive media. Experienced in React, TypeScript, WebGL, and AI-driven content systems.">
     <meta name="author" content="Pedro Pita">
         <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#000000" />
@@ -20,14 +20,14 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pedropita.dev/resume/">
-    <meta property="og:title" content="Pedro Pita — Creative Technologist & Web Developer">
+    <meta property="og:title" content="Pedro Pita - Creative Technologist & Web Developer">
     <meta property="og:description" content="Explore the resume and professional experience of Pedro Pita — blending web engineering, design, and creative technology.">
     <meta property="og:image" content="https://pedropita.dev/assets/og/og-resume-card.png">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://pedropita.dev/resume/">
-    <meta name="twitter:title" content="Pedro Pita — Creative Technologist & Web Developer">
+    <meta name="twitter:title" content="Pedro Pita - Creative Technologist & Web Developer">
     <meta name="twitter:description" content="Explore the resume and portfolio of Pedro Pita, Lisbon-based creative technologist building interactive web experiences.">
     <meta name="twitter:image" content="https://pedropita.dev/assets/og/og-resume-card.png">
 
@@ -66,16 +66,24 @@
         box-sizing: border-box;
       }
 
+      :root {
+        /* Explicit defaults to ensure visible cyan headings and readable tones */
+        --accent-h1: #00e5ff;
+        --accent-h2: #00bcd4;
+        --body-fg: rgba(226, 232, 240, 0.96);
+        --meta-color: rgba(200, 210, 220, 0.9);
+      }
+
       html {
         font-size: var(--font-size);
         background: var(--color-background);
-        color: var(--color-foreground);
+        color: var(--body-fg);
       }
 
       body {
         min-height: 100%;
         background: var(--color-background);
-        color: var(--color-foreground);
+        color: var(--body-fg);
         font-family: 'Roboto Mono', monospace;
         line-height: 1.6;
         -webkit-text-size-adjust: 100%;
@@ -118,25 +126,28 @@
         transform: translateY(1px);
       }
 
+      /* Headings use dedicated accent variables for consistent tones */
       h1 {
         font-size: 2.4rem;
         margin-bottom: 0.35rem;
-        color: var(--accent, var(--color-accent));
+        color: var(--accent-h1, #00e5ff);
         letter-spacing: 0.02em;
-        transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: color 0.35s ease;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.45);
       }
 
       h2 {
         margin-top: 2rem;
         margin-bottom: 0.75rem;
-        color: var(--accent, var(--color-accent));
-        transition: color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--accent-h2, #00bcd4);
+        transition: color 0.35s ease;
         break-after: avoid-page;
+        text-shadow: 0 0.6px 0 rgba(0,0,0,0.35);
       }
 
       p {
         margin-bottom: 1rem;
-        color: rgba(238, 243, 255, 0.88);
+        color: rgba(226, 232, 240, 0.96);
         break-inside: avoid;
       }
 
@@ -153,12 +164,12 @@
         flex-wrap: wrap;
         gap: 0.25rem 1rem;
         font-size: 1rem;
-        color: rgba(226, 232, 240, 0.8);
+        color: var(--meta-color);
         margin-bottom: 1rem;
       }
 
       a {
-        color: var(--accent, var(--color-accent));
+        color: var(--accent-h1, #00e5ff);
         text-decoration: none;
         pointer-events: auto;
         padding-inline: 2px;
@@ -180,48 +191,50 @@
       }
 
       @media print {
-        @page {
-          size: A4;
-          margin: 12mm;
-        }
+        @page { size: A4 landscape; margin: 4mm; }
 
-        html,
-        body {
-          background: #fff;
-          color: #000;
-        }
+        /* Force black-on-white for print */
+        html, body { background: #fff; color: #000; }
 
-        body {
-          padding: 0;
-        }
+        body { padding: 2mm; }
 
-        .page {
-          max-width: 100%;
-          padding: 0;
-          color: #000;
-        }
+        /* Very small base font and tight spacing to fit a single page */
+        html, body { font-size: 7px !important; line-height: 0.98 !important; }
 
-        .actions {
-          display: none !important;
-        }
+        .page { max-width: 100% !important; margin: 0 !important; padding: 0 !important; color: #000 !important; }
 
-        h1,
-        h2 {
-          color: #000 !important;
-        }
+        /* Headings */
+        h1 { font-size: 12px !important; margin: 0 0 4px 0 !important; line-height: 1 !important; }
+        h2 { font-size: 9.5px !important; margin: 6px 0 2px 0 !important; line-height: 1 !important; }
 
-        a {
-          color: #000;
-          text-decoration: underline;
-        }
+        /* Body text and lists */
+        p, li { font-size: 7.5px !important; margin: 1px 0 !important; }
+        ul { margin: 0 0 4px 6px !important; }
+        li { margin: 0 !important; padding: 0 !important; }
 
-        body * {
-          color: #000 !important;
-          background: transparent !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
+        /* Meta and action controls removed for the printable compact resume */
+        .actions, .meta { display: none !important; }
+
+        /* Hide the portfolio/links paragraph to save space */
+        .page p:first-of-type { display: none !important; }
+
+        /* Ensure colors are black for print */
+        a { color: #000 !important; text-decoration: underline !important; }
+        body * { background: transparent !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #000 !important; }
       }
+
+      /* Compact on-screen preview when user clicks Download */
+      .compact {
+        padding: 0.5rem 0.4rem 0.6rem !important;
+        line-height: 1.05;
+        font-size: 12px;
+      }
+
+      .compact .page { max-width: 900px; }
+
+      .compact h1 { font-size: 1.3rem; margin-bottom: 0.1rem; }
+      .compact h2 { margin-top: 0.6rem; margin-bottom: 0.1rem; font-size: 0.98rem; }
+      .compact p, .compact li { font-size: 0.86rem; margin-bottom: 0.12rem; }
     </style>
   </head>
   <body>
@@ -248,36 +261,48 @@
 
       <h2>Summary</h2>
       <p>
-        Creative technologist with a hands-on approach to building fast, resilient web apps and interactive experiences.
-        Rooted in classic JavaScript and front-end architecture, I bridge design, code, and sound to deliver clean,
-        documented builds that perform and endure.
+       Creative technologist specializing in web-native systems, combining front-end engineering, lightweight back-end architecture, and audio-driven interactive design. I build fast, maintainable products. From dashboards and microsites to browser games, API-backed apps, and audio/visual engines. Strong focus on performance, clarity, and clean handoff.
       </p>
 
       <h2>Core Competencies</h2>
-      <p>
-        Front-End Architecture · JavaScript Ecosystem · Creative Coding · Audio Systems Design · WebGL &amp; WebAudio ·
-        SEO &amp; Accessibility · Data Visualization · UX Engineering · Rapid Prototyping · Cross-Disciplinary Collaboration
-      </p>
+      <ul>
+        <li>Front-End Architecture & Design Systems</li>
+        <li>Full-Stack Web Development (Node/Express APIs, Auth, DBs, Deployment)</li>
+        <li>Creative Coding (WebGL, Canvas, Shader-based visuals)</li>
+        <li>WebAudio, Max/MSP & Audio Systems Design</li>
+        <li>Rapid Prototyping & Playable Slices</li>
+        <li>Data Visualization & Real-Time Interfaces</li>
+        <li>SEO, Accessibility & Performance Engineering</li>
+        <li>Instrumentation, Debugging & Build Pipelines</li>
+      </ul>
 
-      <h2>Tech Stack</h2>
-      <p><strong>Core:</strong> JavaScript · TypeScript · React · Node.js · Vite · Tailwind · Three.js · REST APIs</p>
-      <p><strong>Creative &amp; Audio:</strong> WebGL · WebAudio · Max/MSP · p5.js · Ableton Live · OBS Studio</p>
-      <p><strong>Also:</strong> SQL · Python (Data) · Adobe CC · Figma</p>
+      <h2>Technical Stack</h2>
+      <p><strong>Web &amp; Runtime:</strong> JavaScript · TypeScript · React · Node.js · Express · Vite · Tailwind CSS · REST APIs</p>
+      <p><strong>Graphics &amp; Creative Tech:</strong> Canvas · WebGL · Three.js · GLSL shaders · Particle systems · Procedural visuals</p>
+      <p><strong>Audio &amp; Interactive:</strong> WebAudio API · Max/MSP · p5.js · Adaptive audio, DSP chains, UI sound suites · Ableton Live · OBS Studio</p>
+      <p><strong>Data &amp; Ops:</strong> MongoDB · Supabase · SQLite · SQL · Python (Data) · Analytics hooks, monitoring, instrumentation · CI/CD · Docker · Railway/Render/Vercel/Netlify</p>
+      <p><strong>Design &amp; Tooling:</strong> Figma · Adobe CC · UX engineering & prototyping</p>
 
       <h2>Experience</h2>
 
-      <p><strong>Carpe Data — Analyst, Product Delivery (2021–2024)</strong></p>
+      <p><strong>Iron Signal Works — Creative Technologist (2024–Present)</strong></p>
       <ul>
-        <li>Automated data pipelines and optimized ML dashboards for insurance analytics.</li>
-        <li><strong>Improved dashboard load times by 35%.</strong></li>
-        <li>Enhanced fraud-detection review flows to reduce manual review time and increase data accuracy.</li>
+        <li>Independent R&D studio producing web applications, games, audio systems, and full-stack prototypes.</li>
+        <li>Shipped 10+ browser games, interactive UIs, and audio-reactive experiences using React, WebGL, and WebAudio.</li>
+        <li>Built Node/Express APIs, data pipelines, and lightweight auth for dashboards and tools.</li>
+        <li>Delivered production-ready websites for clients (commerce, band pages, service businesses) with fast LCP and strong SEO.</li>
+        <li>Created custom synth engines, sequencers, and visualizers blending Max/MSP, WebAudio, and WebGL.</li>
+        <li>Set up CI/CD pipelines, domains, analytics, and performance budgets across projects.</li>
+        <li><em>Selected:</em> <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> • <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">github.com/IronSignalWorks</a></li>
       </ul>
 
-      <p><strong>Iron Signal Works — Independent Studio (2024–Present)</strong></p>
+      <p><strong>Carpe Data — Analyst, Product Delivery (2021–2024)</strong></p>
       <ul>
-        <li>Built browser games, interactive interfaces, and immersive audio systems.</li>
-        <li><strong>Released 10+ games and prototypes</strong> integrating React, WebGL, and custom audio engines.</li>
-        <li><em>Selected links:</em> <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">Studio</a> • <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a></li>
+        <li>Insurance analytics platform integrating ML, dashboards, and data automation.</li>
+        <li>Automated data pipelines and optimized reporting workflows.</li>
+        <li><strong>Improved dashboard load times by 35%</strong> through restructuring queries, caching, and front-end improvements.</li>
+        <li>Enhanced fraud detection workflows, reducing manual review time and increasing decision accuracy.</li>
+        <li>Collaborated cross-functionally with engineering and product to ship production features.</li>
       </ul>
 
       <h2>Audio &amp; Interactive Systems</h2>
@@ -288,7 +313,7 @@
 
       <h2>Education</h2>
       <p>Faculdade de Letras da Universidade de Coimbra (FLUC) — Estudos Artísticos: Cinema</p>
-      <p>Additional Training (On-the-Job Technical) — Python (Data) · SQL · Git · Jira · Power BI</p>
+      <p>Complemented by technical training in Python (Data), SQL, Git, Power BI, and web development via self-directed R&amp;D and production work.</p>
     </main>
 
     <script>
@@ -340,17 +365,10 @@
         // Keep headings vivid on black. Optionally tweak separately:
         const h1 = shade(accent, +24);
         const h2 = shade(accent, -12);
-
         document.documentElement.style.setProperty('--accent', accent);
-        // h1/h2 both read from --accent, but nudging the var can be done if desired.
-        // If you prefer separate vars, swap CSS to --resume-h1/--resume-h2 and set them here:
-        // document.documentElement.style.setProperty('--resume-h1', h1);
-        // document.documentElement.style.setProperty('--resume-h2', h2);
-
-        // Since CSS uses --accent directly, keeping it consistent is enough;
-        // below line optionally brightens headings by directly setting color inline:
-        document.querySelector('h1')?.style.setProperty('color', h1);
-        document.querySelectorAll('h2')?.forEach(el => el.style.setProperty('color', h2));
+        // Set dedicated heading accent variables for better tone control
+        document.documentElement.style.setProperty('--accent-h1', h1);
+        document.documentElement.style.setProperty('--accent-h2', h2);
       }
 
       // --- Clean view toggle ---
@@ -361,8 +379,25 @@
         }
       })();
 
-      // --- Download: print dialog ---
+      // --- Download: print dialog (compact single-page) ---
       document.getElementById('downloadBtn')?.addEventListener('click', () => {
+        // Add compact class to body to apply denser styles for print
+        document.body.classList.add('compact');
+
+        // For browsers supporting matchMedia print events, remove compact after print ends
+        const mediaQueryList = window.matchMedia && window.matchMedia('print');
+        const removeCompact = () => {
+          document.body.classList.remove('compact');
+          try { mediaQueryList.removeEventListener('change', onChange); } catch {}
+        };
+        const onChange = (m) => { if (!m.matches) removeCompact(); };
+        try {
+          if (mediaQueryList) mediaQueryList.addEventListener('change', onChange);
+        } catch {}
+
+        // Fallback: ensure compact class removed after a timeout in case print events aren't supported
+        setTimeout(() => { document.body.classList.remove('compact'); }, 3000);
+
         window.print();
       });
 

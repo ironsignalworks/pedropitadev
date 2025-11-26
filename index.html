@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Pedro Pita — creative web engineering</title>
+    <title>Resume | Pedro Pita</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2300e5ff'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='28' fill='%23000' font-family='Arial,Helvetica,sans-serif'%3EP%3C/text%3E%3C/svg%3E">
@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/assets/theme.css">
 
         <!-- Primary Meta -->
-        <meta name="title" content="Pedro Pita — Creative Web Engineering">
+        <meta name="title" content="Pedro Pita - Creative Web Engineering">
         <meta name="description" content="Creative technologist and web developer building interactive, high-performance experiences with React, TypeScript, WebGL/WebAudio, and data-driven design. Based in Lisbon — remote friendly.">
         <meta name="author" content="Pedro Pita">
         <meta name="robots" content="index, follow" />
@@ -24,14 +24,14 @@
         <!-- Open Graph -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://pedropita.dev/">
-        <meta property="og:title" content="Pedro Pita — Creative Web Engineering">
+        <meta property="og:title" content="Pedro Pita - Creative Web Engineering">
         <meta property="og:description" content="Interactive web experiences that blend code, design, and sound. Explore work, prototypes, and resume.">
         <meta property="og:image" content="https://pedropita.dev/assets/og/og-home.png">
     
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:url" content="https://pedropita.dev/">
-        <meta name="twitter:title" content="Pedro Pita — Creative Web Engineering">
+        <meta name="twitter:title" content="Pedro Pita - Creative Web Engineering">
         <meta name="twitter:description" content="Interactive web experiences that blend code, design, and sound. Explore work, prototypes, and resume.">
         <meta name="twitter:image" content="https://pedropita.dev/assets/og/og-home.png">
     
@@ -47,7 +47,7 @@
           "@graph": [
             {
               "@type": "WebSite",
-              "name": "Pedro Pita — Creative Web Engineering",
+              "name": "Pedro Pita - Creative Web Engineering",
               "url": "https://pedropita.dev",
               "inLanguage": "en",
               "description": "Creative technologist building interactive, high-performance web experiences.",
@@ -568,6 +568,18 @@
             
             // Set resume content
             resumeContent.innerHTML = source.innerHTML;
+
+            // Ensure accent and color variables are applied to the injected content
+            // This forces cyan heading/link tones even if outer theme overrides exist.
+            try {
+              resumeContent.style.setProperty('--accent', '#00e5ff');
+              resumeContent.style.setProperty('--accent-h1', '#00e5ff');
+              resumeContent.style.setProperty('--accent-h2', '#00bcd4');
+              resumeContent.style.setProperty('--body-fg', 'rgba(226, 232, 240, 0.96)');
+              resumeContent.style.setProperty('--meta-color', 'rgba(200, 210, 220, 0.9)');
+            } catch (e) {
+              // ignore if not supported
+            }
             
             // Apply Roboto to all elements after loading
             resumeContent.querySelectorAll('*').forEach((el) => {
