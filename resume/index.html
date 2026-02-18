@@ -1,457 +1,77 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
   <head>
+    <title>Resume | Pedro Pita</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pedro Pita Resume</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2300e5ff'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='28' fill='%23000' font-family='Arial,Helvetica,sans-serif'%3EP%3C/text%3E%3C/svg%3E" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/theme.css" />
 
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="Pedro Pita - Creative Technologist & Web Developer">
-    <meta name="description" content="Resume of Pedro Pita - Creative Technologist & Web Developer based in Lisbon, Portugal. Specializing in front-end engineering, creative coding, and interactive media. Experienced in React, TypeScript, WebGL, and AI-driven content systems.">
-    <meta name="author" content="Pedro Pita">
-        <meta name="robots" content="index, follow" />
+    <meta name="title" content="Pedro Pita - Creative Web Engineering" />
+    <meta name="description" content="Creative technologist and web developer building interactive, high-performance experiences with React, TypeScript, WebGL/WebAudio, and data-driven design. Based in Lisbon - remote friendly." />
+    <meta name="author" content="Pedro Pita" />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#000000" />
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://pedropita.dev/resume/">
-    <meta property="og:title" content="Pedro Pita - Creative Technologist & Web Developer">
-    <meta property="og:description" content="Explore the resume and professional experience of Pedro Pita — blending web engineering, design, and creative technology.">
-    <meta property="og:image" content="https://pedropita.dev/assets/og/og-resume-card.png">
+    <link rel="canonical" href="https://pedropita.dev/" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://pedropita.dev/resume/">
-    <meta name="twitter:title" content="Pedro Pita - Creative Technologist & Web Developer">
-    <meta name="twitter:description" content="Explore the resume and portfolio of Pedro Pita, Lisbon-based creative technologist building interactive web experiences.">
-    <meta name="twitter:image" content="https://pedropita.dev/assets/og/og-resume-card.png">
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pedropita.dev/" />
+    <meta property="og:title" content="Pedro Pita - Creative Web Engineering" />
+    <meta property="og:description" content="Interactive web experiences that blend code, design, and sound. Explore work, prototypes, and resume." />
+    <meta property="og:image" content="https://pedropita.dev/assets/og/og1.png" />
+    <meta property="og:image:width" content="1060" />
+    <meta property="og:image:height" content="528" />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://pedropita.dev/resume/" />
-    <link rel="stylesheet" href="/assets/theme.css">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://pedropita.dev/" />
+    <meta name="twitter:title" content="Pedro Pita - Creative Web Engineering" />
+    <meta name="twitter:description" content="Interactive web experiences that blend code, design, and sound. Explore work, prototypes, and resume." />
+    <meta name="twitter:image" content="https://pedropita.dev/assets/og/og1.png" />
 
-    <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": "Pedro Pita",
-      "jobTitle": "Creative Technologist & Web Developer",
-      "url": "https://pedropita.dev",
-      "image": "https://pedropita.dev/assets/og/og-resume-card.png",
-      "sameAs": [
-        "https://github.com/IronSignalWorks",
-        "https://www.linkedin.com/in/pedropitadev/",
-        "https://ironsignalworks.com"
-      ],
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Lisbon",
-        "addressCountry": "Portugal"
-      ],
-      "email": "mailto:hello@pedropita.dev",
-      "description": "Creative Technologist & Web Developer based in Lisbon, Portugal. Specialized in React, TypeScript, WebGL, and audio-driven interactive systems."
-    }
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "Pedro Pita - Creative Web Engineering",
+            "url": "https://pedropita.dev",
+            "inLanguage": "en",
+            "description": "Creative technologist building interactive, high-performance web experiences.",
+            "publisher": {
+              "@type": "Person",
+              "name": "Pedro Pita"
+            }
+          },
+          {
+            "@type": "Person",
+            "name": "Pedro Pita",
+            "jobTitle": "Creative Technologist & Web Developer",
+            "url": "https://pedropita.dev",
+            "email": "mailto:hello@pedropita.dev",
+            "image": "https://pedropita.dev/assets/og/portrait.jpg",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Lisbon",
+              "addressCountry": "PT"
+            },
+            "sameAs": [
+              "https://github.com/IronSignalWorks",
+              "https://www.linkedin.com/in/pedropitadev/",
+              "https://ironsignalworks.com"
+            ]
+          }
+        ]
+      }
     </script>
-
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      :root {
-        /* Explicit defaults to ensure visible cyan headings and readable tones */
-        --accent-h1: #00e5ff;
-        --accent-h2: #00bcd4;
-        --body-fg: rgba(226, 232, 240, 0.96);
-        --meta-color: rgba(200, 210, 220, 0.9);
-      }
-
-      html {
-        font-size: var(--font-size);
-        background: var(--color-background);
-        color: var(--body-fg);
-      }
-
-      body {
-        min-height: 100%;
-        background: var(--color-background);
-        color: var(--body-fg);
-        font-family: 'Roboto Mono', monospace;
-        line-height: 1.6;
-        -webkit-text-size-adjust: 100%;
-        padding: 3rem 1.5rem 4rem;
-        background-image: none;
-      }
-
-      .page {
-        max-width: 960px;
-        margin: 0 auto;
-        color: var(--color-card-foreground);
-      }
-
-      .actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 1rem;
-        gap: 0.5rem;
-      }
-
-      .btn {
-        appearance: none;
-        border: 1px solid var(--color-border);
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--color-foreground);
-        font-size: 0.95rem;
-        padding: 0.4rem 0.85rem;
-        border-radius: 999px;
-        cursor: pointer;
-        transition: border-color 0.2s, transform 0.08s, background 0.2s;
-        touch-action: manipulation;
-      }
-
-      .btn:hover {
-        border-color: rgba(255, 255, 255, 0.45);
-        background: rgba(255, 255, 255, 0.08);
-      }
-
-      .btn:active {
-        transform: translateY(1px);
-      }
-
-      /* Headings use dedicated accent variables for consistent tones */
-      h1 {
-        font-size: 2.4rem;
-        margin-bottom: 0.35rem;
-        color: var(--accent-h1, #00e5ff);
-        letter-spacing: 0.02em;
-        transition: color 0.35s ease;
-        text-shadow: 0 1px 0 rgba(0,0,0,0.45);
-      }
-
-      h2 {
-        margin-top: 2rem;
-        margin-bottom: 0.75rem;
-        color: var(--accent-h2, #00bcd4);
-        transition: color 0.35s ease;
-        break-after: avoid-page;
-        text-shadow: 0 0.6px 0 rgba(0,0,0,0.35);
-      }
-
-      p {
-        margin-bottom: 1rem;
-        color: rgba(226, 232, 240, 0.96);
-        break-inside: avoid;
-      }
-
-      ul {
-        margin: 0 0 1rem 1.2rem;
-      }
-
-      li {
-        margin: 0.2rem 0;
-      }
-
-      .meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem 1rem;
-        font-size: 1rem;
-        color: var(--meta-color);
-        margin-bottom: 1rem;
-      }
-
-      a {
-        color: var(--accent-h1, #00e5ff);
-        text-decoration: none;
-        pointer-events: auto;
-        padding-inline: 2px;
-        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
-        touch-action: manipulation;
-      }
-
-      a:hover {
-        opacity: 0.9;
-        text-decoration: underline;
-      }
-
-      a:active {
-        opacity: 1;
-      }
-
-      .clean .actions {
-        display: none !important;
-      }
-
-      @media print {
-        @page { size: A4 landscape; margin: 4mm; }
-
-        /* Force black-on-white for print */
-        html, body { background: #fff; color: #000; }
-
-        body { padding: 2mm; }
-
-        /* Very small base font and tight spacing to fit a single page */
-        html, body { font-size: 7px !important; line-height: 0.98 !important; }
-
-        .page { max-width: 100% !important; margin: 0 !important; padding: 0 !important; color: #000 !important; }
-
-        /* Headings */
-        h1 { font-size: 12px !important; margin: 0 0 4px 0 !important; line-height: 1 !important; }
-        h2 { font-size: 9.5px !important; margin: 6px 0 2px 0 !important; line-height: 1 !important; }
-
-        /* Body text and lists */
-        p, li { font-size: 7.5px !important; margin: 1px 0 !important; }
-        ul { margin: 0 0 4px 6px !important; }
-        li { margin: 0 !important; padding: 0 !important; }
-
-        /* Meta and action controls removed for the printable compact resume */
-        .actions, .meta { display: none !important; }
-
-        /* Hide the portfolio/links paragraph to save space */
-        .page p:first-of-type { display: none !important; }
-
-        /* Ensure colors are black for print */
-        a { color: #000 !important; text-decoration: underline !important; }
-        body * { background: transparent !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #000 !important; }
-      }
-
-      /* Compact on-screen preview when user clicks Download */
-      .compact {
-        padding: 0.5rem 0.4rem 0.6rem !important;
-        line-height: 1.05;
-        font-size: 12px;
-      }
-
-      .compact .page { max-width: 900px; }
-
-      .compact h1 { font-size: 1.3rem; margin-bottom: 0.1rem; }
-      .compact h2 { margin-top: 0.6rem; margin-bottom: 0.1rem; font-size: 0.98rem; }
-      .compact p, .compact li { font-size: 0.86rem; margin-bottom: 0.12rem; }
-    </style>
   </head>
   <body>
-    <main class="page">
-      <div class="actions">
-        <button class="btn" id="shareBtn" type="button">Share</button>
-        <button class="btn" id="downloadBtn" type="button">Download PDF</button>
-      </div>
-
-      <h1>Pedro Pita - Creative Technologist &amp; Web Developer</h1>
-      <div class="meta">
-        <span>Lisbon, Portugal - Remote OK</span>
-        <span>•</span>
-        <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
-        <span>•</span>
-        <a href="https://www.linkedin.com/in/pedropitadev/" target="_blank" rel="noreferrer">LinkedIn</a>
-      </div>
-      <p>
-        Portfolio: <a href="https://pedropita.dev" target="_blank" rel="noreferrer">pedropita.dev</a> |
-        Studio: <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> |
-        GitHub: <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">github.com/IronSignalWorks</a>
-      </p>
-      <p>Languages: Portuguese (Native), English (C2)</p>
-
-      <h2>Summary</h2>
-      <p>
-       Creative technologist specializing in web-native systems, combining front-end engineering, lightweight back-end architecture, and audio-driven interactive design. I build fast, maintainable products. From dashboards and microsites to browser games, API-backed apps, and audio/visual engines. Strong focus on performance, clarity, and clean handoff.
-      </p>
-
-      <h2>Core Competencies</h2>
-      <ul>
-        <li>Front-End Architecture & Design Systems</li>
-        <li>Full-Stack Web Development (Node/Express APIs, Auth, DBs, Deployment)</li>
-        <li>Creative Coding (WebGL, Canvas, Shader-based visuals)</li>
-        <li>WebAudio, Max/MSP & Audio Systems Design</li>
-        <li>Rapid Prototyping & Playable Slices</li>
-        <li>Data Visualization & Real-Time Interfaces</li>
-        <li>SEO, Accessibility & Performance Engineering</li>
-        <li>Instrumentation, Debugging & Build Pipelines</li>
-      </ul>
-
-      <h2>Technical Stack</h2>
-      <p><strong>Web &amp; Runtime:</strong> JavaScript · TypeScript · React · Node.js · Express · Vite · Tailwind CSS · REST APIs</p>
-      <p><strong>Graphics &amp; Creative Tech:</strong> Canvas · WebGL · Three.js · GLSL shaders · Particle systems · Procedural visuals</p>
-      <p><strong>Audio &amp; Interactive:</strong> WebAudio API · Max/MSP · p5.js · Adaptive audio, DSP chains, UI sound suites · Ableton Live · OBS Studio</p>
-      <p><strong>Data &amp; Ops:</strong> MongoDB · Supabase · SQLite · SQL · Python (Data) · Analytics hooks, monitoring, instrumentation · CI/CD · Docker · Railway/Render/Vercel/Netlify</p>
-      <p><strong>Design &amp; Tooling:</strong> Figma · Adobe CC · UX engineering & prototyping</p>
-
-      <h2>Experience</h2>
-
-      <p><strong>Iron Signal Works — Creative Technologist (2024–Present)</strong></p>
-      <ul>
-        <li>Independent R&amp;D studio producing web applications, games, audio systems, and full-stack prototypes.</li>
-        <li>Shipped 10+ browser games, interactive UIs, and audio-reactive experiences using React, WebGL, and WebAudio.</li>
-        <li>Built Node/Express APIs, data pipelines, and lightweight auth for dashboards and tools.</li>
-        <li>Delivered production-ready websites for clients (commerce, band pages, service businesses) with fast LCP and strong SEO.</li>
-        <li>Created custom synth engines, sequencers, and visualizers blending Max/MSP, WebAudio, and WebGL.</li>
-        <li>Set up CI/CD pipelines, domains, analytics, and performance budgets across projects.</li>
-        <li>Selected: <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> • <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">github.com/IronSignalWorks</a></li>
-      </ul>
-
-      <p><strong>Carpe Data — Analyst, Product Delivery (2021–2024)</strong></p>
-      <ul>
-        <li>Insurance analytics platform integrating ML, dashboards, and data automation.</li>
-        <li>Automated data pipelines and optimized reporting workflows.</li>
-        <li>Improved dashboard load times by 35% through restructuring queries, caching, and front-end improvements.</li>
-        <li>Enhanced fraud detection workflows, reducing manual review time and increasing decision accuracy.</li>
-        <li>Collaborated cross-functionally with engineering and product to ship production features.</li>
-      </ul>
-
-      <h2>Audio &amp; Interactive Systems Work</h2>
-
-      <p>Designing responsive sound environments, UI sound kits, and browser-native instruments using Max/MSP, WebAudio, and p5.js.
-      Experience with live routing, capture pipelines, broadcast-ready mixes, and syncing visual/audio systems for interactive media.</p>
-
-      <h2>Education</h2>
-      <p>Faculdade de Letras da Universidade de Coimbra (FLUC) - Estudos Artísticos: Cinema</p>
-      <p>Complemented by technical training in Python (Data), SQL, Git, Power BI, and web development via self-directed R&amp;D and production work.</p>
-    </main>
-
-    <script>
-      // --- Accent resolver + application ---
-      const clamp255 = n => Math.max(0, Math.min(255, Math.round(n)));
-
-      function hexToRgb(hex) {
-        const m = String(hex).trim().replace('#','').match(/^([0-9a-f]{6}|[0-9a-f]{3})$/i);
-        if (!m) return null;
-        let h = m[1];
-        if (h.length === 3) h = h.split('').map(c => c + c).join('');
-        const num = parseInt(h, 16);
-        return [ (num>>16)&255, (num>>8)&255, num&255 ];
-      }
-
-      function rgbToHex([r,g,b]) {
-        return '#' + [r,g,b].map(v => clamp255(v).toString(16).padStart(2, '0')).join('');
-      }
-
-      function shade(hex, amt) {
-        const rgb = hexToRgb(hex);
-        if (!rgb) return hex;
-        return rgbToHex(rgb.map(v => v + amt));
-      }
-
-      async function resolveAccent() {
-        // 1) URL param ?accent=#RRGGBB
-        const url = new URL(location.href);
-        const p = url.searchParams.get('accent');
-        if (p && hexToRgb(p)) return p;
-
-        // 2) CSS var --accent (if host/page defines it)
-        const localAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-        if (localAccent && hexToRgb(localAccent)) return localAccent;
-
-        // 3) Fallback: fetch homepage and look for --accent: value;
-        try {
-          const res = await fetch('/', { credentials: 'same-origin' });
-          const html = await res.text();
-          const m = html.match(/--accent\s*:\s*([^;]+);/i);
-          if (m && hexToRgb(m[1].trim())) return m[1].trim();
-        } catch (_) {}
-
-        // 4) Final fallback
-        return getComputedStyle(document.documentElement).getPropertyValue('--resume-fallback-accent').trim() || '#00e5ff';
-      }
-
-      function applyAccent(accent) {
-        // Keep headings vivid on black. Optionally tweak separately:
-        const h1 = shade(accent, +24);
-        const h2 = shade(accent, -12);
-        document.documentElement.style.setProperty('--accent', accent);
-        // Set dedicated heading accent variables for better tone control
-        document.documentElement.style.setProperty('--accent-h1', h1);
-        document.documentElement.style.setProperty('--accent-h2', h2);
-      }
-
-      // --- Clean view toggle ---
-      (function () {
-        const params = new URLSearchParams(location.search);
-        if (params.get('clean') === '1') {
-          document.body.classList.add('clean');
-        }
-      })();
-
-      // --- Download: print dialog (compact single-page) ---
-      document.getElementById('downloadBtn')?.addEventListener('click', () => {
-        // Add compact class to body to apply denser styles for print
-        document.body.classList.add('compact');
-
-        // For browsers supporting matchMedia print events, remove compact after print ends
-        const mediaQueryList = window.matchMedia && window.matchMedia('print');
-        const removeCompact = () => {
-          document.body.classList.remove('compact');
-          try { mediaQueryList.removeEventListener('change', onChange); } catch {}
-        };
-        const onChange = (m) => { if (!m.matches) removeCompact(); };
-        try {
-          if (mediaQueryList) mediaQueryList.addEventListener('change', onChange);
-        } catch {}
-
-        // Fallback: ensure compact class removed after a timeout in case print events aren't supported
-        setTimeout(() => { document.body.classList.remove('compact'); }, 3000);
-
-        window.print();
-      });
-
-      // --- Share: Web Share API or copy fallback ---
-      document.getElementById('shareBtn')?.addEventListener('click', async (e) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('clean', '1'); // share a clean view
-        const shareData = {
-          title: 'Pedro Pita — Resume',
-          text: 'Resume — Creative Technologist & Web Developer',
-          url: url.toString()
-        };
-        if (navigator.share) {
-          try { await navigator.share(shareData); } catch {}
-        } else if (navigator.clipboard && window.isSecureContext) {
-          try {
-            await navigator.clipboard.writeText(shareData.url);
-            const btn = e.currentTarget;
-            const old = btn.textContent;
-            btn.textContent = 'Link copied!';
-            setTimeout(() => (btn.textContent = old), 1400);
-          } catch {
-            window.prompt('Copy this URL:', shareData.url);
-          }
-        } else {
-          window.prompt('Copy this URL:', shareData.url);
-        }
-      });
-
-      // --- Mobile link reliability: ensure taps navigate (iOS/Safari quirks) ---
-      function reinforceAnchors() {
-        document.querySelectorAll('a[href]').forEach(a => {
-          if (a.dataset.touchBound) return;
-          a.dataset.touchBound = '1';
-          const href = a.getAttribute('href');
-          const isBlank = a.target === '_blank';
-          a.addEventListener('touchend', () => {
-            setTimeout(() => {
-              try {
-                if (isBlank) window.open(href, '_blank', 'noopener');
-                else location.href = href;
-              } catch {
-                location.assign(href);
-              }
-            }, 0);
-          }, { passive: true });
-        });
-      }
-
-      // --- Boot ---
-      (async function start() {
-        reinforceAnchors();
-        const accent = await resolveAccent();
-        applyAccent(accent);
-      })();
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
