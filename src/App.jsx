@@ -424,6 +424,7 @@ export default function App() {
         };
 
         const onPointerDown = (e) => {
+          if (resumeLayer.contains(e.target)) return;
           if (resumeVisibleRef.current) return;
           syncPointer(e);
           updateHoverState();
@@ -458,7 +459,8 @@ export default function App() {
           }
         };
 
-        const onPointerUp = () => {
+        const onPointerUp = (e) => {
+          if (resumeLayer.contains(e.target)) return;
           if (resumeVisibleRef.current) return;
           const wasDragging = dragMoved;
           didDrag = wasDragging;
@@ -467,7 +469,8 @@ export default function App() {
           if (!wasDragging && triggerActionAtPointer()) suppressNextClick = true;
         };
 
-        const onClick = () => {
+        const onClick = (e) => {
+          if (resumeLayer.contains(e.target)) return;
           if (resumeVisibleRef.current) return;
           if (suppressNextClick) {
             suppressNextClick = false;
@@ -613,17 +616,14 @@ export default function App() {
       <canvas id="bgCanvas" ref={bgCanvasRef} />
       <canvas id="textCanvas" ref={textCanvasRef} className={resumeVisible ? 'hidden' : ''} />
 
-      <div
-        id="resumeLayer"
-        ref={resumeLayerRef}
-        className={resumeVisible ? 'visible' : ''}
-        onPointerDownCapture={(event) => event.stopPropagation()}
-        onPointerUpCapture={(event) => event.stopPropagation()}
-        onClickCapture={(event) => event.stopPropagation()}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) hideResumeLayer();
-        }}
-      >
+        <div
+          id="resumeLayer"
+          ref={resumeLayerRef}
+          className={resumeVisible ? 'visible' : ''}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) hideResumeLayer();
+          }}
+        >
         <div className="resume-content">
           <div className="actions">
             <button className="btn" id="shareBtn" type="button" onClick={onShare}>
