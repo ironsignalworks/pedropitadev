@@ -192,7 +192,7 @@ export default function App() {
         const H1 = 0.10 * responsiveScale;
 
         const wordSpecs = [
-          { text: 'Pedro Pita', height: H1, url: 'https://www.linkedin.com/in/pedropitadev/' },
+          { text: 'Pedro Pita', height: H1, action: 'resume' },
           { text: 'Resume', height: H1 * 0.6, action: 'resume' },
           { text: 'Studio', height: H1 * 0.48, url: 'https://ironsignalworks.com' },
           { text: 'hello@pedropita.dev', height: H1 * 0.38, url: 'mailto:hello@pedropita.dev' },
@@ -203,6 +203,16 @@ export default function App() {
         const clickables = [];
         const draggableWords = [];
         let lastHover = null;
+        const getCombinedScale = (word) => {
+          const baseScale = word.userData.baseScale || 1;
+          const hoverScale = word.userData.hoverScale || 1;
+          const pulseScale = word.userData.pulseScale || 1;
+          return baseScale * hoverScale * pulseScale;
+        };
+        const applyCombinedScale = (word) => {
+          const s = getCombinedScale(word);
+          word.scale.set(s, s, 1);
+        };
 
         function makeStrokeText(text, targetHeight, fillMaterial, strokeMaterial) {
           const shapes = font.generateShapes(text, 100);
@@ -297,15 +307,19 @@ export default function App() {
           const pos = findRandomPosition(bounds.width, bounds.height, draggableWords);
           wordGroup.position.set(pos.x, pos.y, 0);
           wordGroup.userData.isDraggableWord = true;
+          wordGroup.userData.hoverScale = 1;
+          wordGroup.userData.hoverTargetScale = 1;
+          wordGroup.userData.pulseScale = 1;
+          wordGroup.userData.pulseOffset = Math.random() * Math.PI * 2;
+          wordGroup.userData.pulseMix = 0;
+          wordGroup.userData.applyScale = () => applyCombinedScale(wordGroup);
 
           if (spec.url || spec.action) {
             wordGroup.userData.url = spec.url;
             wordGroup.userData.action = spec.action;
             wordGroup.userData.isLink = true;
             wordGroup.userData.setHover = (hover) => {
-              const baseScale = wordGroup.userData.baseScale || 1;
-              const lift = hover ? 1.08 : 1;
-              wordGroup.scale.set(baseScale * lift, baseScale * lift, 1);
+              wordGroup.userData.hoverTargetScale = hover ? 1.06 : 1;
 
               for (const child of wordGroup.children) {
                 if (child.material) {
@@ -511,7 +525,37 @@ export default function App() {
         window.addEventListener('resize', onResize);
 
         let rafId = 0;
+        let introStart = null;
         const animate = (t = 0) => {
+          if (introStart === null) introStart = t * 0.001;
+          const elapsed = t * 0.001 - introStart;
+
+          if (elapsed > 0.05) {
+            bgCanvas.classList.add('ready');
+          }
+
+          const activeHoverWord = resumeVisibleRef.current ? null : lastHover;
+          for (const word of draggableWords) {
+            const hoverTargetScale = word.userData.hoverTargetScale || 1;
+            const hoverScale = word.userData.hoverScale || 1;
+            word.userData.hoverScale = hoverScale + (hoverTargetScale - hoverScale) * 0.12;
+
+            const pulseMixTarget = word === activeHoverWord ? 1 : 0;
+            const pulseMix = word.userData.pulseMix || 0;
+            word.userData.pulseMix = pulseMix + (pulseMixTarget - pulseMix) * 0.1;
+
+            if (word === activeHoverWord) {
+              const pulseOffset = word.userData.pulseOffset || 0;
+              const pulse = Math.sin(elapsed * 1.35 + pulseOffset) * 0.03 * word.userData.pulseMix;
+              word.userData.pulseScale = 1 + pulse;
+            } else {
+              const pulseOffset = word.userData.pulseOffset || 0;
+              const pulse = Math.sin(elapsed * 1.35 + pulseOffset) * 0.03 * word.userData.pulseMix;
+              word.userData.pulseScale = 1 + pulse;
+            }
+            applyCombinedScale(word);
+          }
+
           shaderMaterial.uniforms.uTime.value = t * 0.001;
           bgRenderer.render(bgScene, bgCamera);
           textRenderer.render(textScene, textCamera);
@@ -635,60 +679,92 @@ export default function App() {
           </div>
 
           <section className="cv-page page-1">
-            <h1>Pedro Pita - Frontend Developer | React &amp; Web Systems</h1>
+            <h1>Pedro Pita</h1>
+            <p className="lead-line">Frontend Developer &middot; React Systems &middot; Web Interfaces</p>
             <p className="lead-line">
-              Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a> &middot;{' '}
+              Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
+            </p>
+            <p className="lead-line">
               <a href="https://www.linkedin.com/in/pedropitadev/" target="_blank" rel="noreferrer">
                 LinkedIn
               </a>
-            </p>
-            <p className="lead-line">
-              <a href="https://pedropita.dev" target="_blank" rel="noreferrer">Portfolio</a> &middot;{' '}
+              {' '} &middot;{' '}
               <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> &middot;{' '}
               <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a>
             </p>
 
             <h2>Summary</h2>
             <p>
-              Frontend developer building fast, maintainable web interfaces and browser-native applications. Experienced in React systems,
-              Node-backed tools, and performance-focused delivery. I ship production websites, dashboards, and interactive systems with strong
-              emphasis on clarity, scalability, and clean handoff.
+              Frontend developer delivering production web interfaces and browser-native systems for clients and internal platforms.
+            </p>
+            <p>
+              I design and ship performant websites, dashboards, and interactive tools using React, TypeScript, and Node-backed architectures.
+              My work emphasizes clean structure, scalability, and reliable handoff so products remain maintainable long after launch.
             </p>
 
-            <h2>Core Skills</h2>
+            <h2>Core Strengths</h2>
             <div className="skills-grid">
               <div className="skill-group">
-                <h3>Frontend &amp; Architecture</h3>
-                <p>React &middot; TypeScript &middot; Component systems &middot; Performance &middot; Accessibility</p>
+                <h3>Frontend Systems</h3>
+                <div className="pill-row">
+                  <span className="tech-pill">React</span>
+                  <span className="tech-pill">TypeScript</span>
+                  <span className="tech-pill">component architecture</span>
+                  <span className="tech-pill">performance optimization</span>
+                  <span className="tech-pill">accessibility</span>
+                </div>
               </div>
               <div className="skill-group">
                 <h3>Full-Stack Delivery</h3>
-                <p>Node &middot; APIs &middot; Auth &middot; Databases &middot; Deployment &middot; CI/CD</p>
+                <div className="pill-row">
+                  <span className="tech-pill">Node.js</span>
+                  <span className="tech-pill">REST APIs</span>
+                  <span className="tech-pill">authentication flows</span>
+                  <span className="tech-pill">databases</span>
+                  <span className="tech-pill">deployment pipelines</span>
+                  <span className="tech-pill">CI/CD</span>
+                </div>
               </div>
               <div className="skill-group">
-                <h3>Interactive Systems</h3>
-                <p>WebGL &middot; Canvas &middot; WebAudio &middot; Data visualization &middot; Real-time UI</p>
+                <h3>Interactive &amp; Real-Time UI</h3>
+                <div className="pill-row">
+                  <span className="tech-pill">Canvas</span>
+                  <span className="tech-pill">WebGL</span>
+                  <span className="tech-pill">WebAudio</span>
+                  <span className="tech-pill">data visualization</span>
+                  <span className="tech-pill">browser-native applications</span>
+                </div>
               </div>
             </div>
 
             <h2>Experience</h2>
             <p className="role-title">
-              <strong>Iron Signal Works - Frontend Developer &amp; Web Systems Engineer (2024-Present)</strong>
+              <strong>Iron Signal Works - Frontend Developer &amp; Web Systems Engineer</strong>
             </p>
+            <p className="lead-line">2024 - Present &middot; Independent web systems studio</p>
+            <p className="lead-line">Industries: services, creative/media, small commerce, internal tools, experimental digital products</p>
             <ul>
-              <li>Shipped production-ready websites for service and commerce clients with strong SEO and fast performance metrics.</li>
-              <li>Built React dashboards and internal tools backed by Node/Express APIs and lightweight auth systems.</li>
-              <li>Delivered full deployment pipelines including domains, hosting, CI/CD, analytics, and monitoring.</li>
-              <li>Created reusable component structures and maintainable architecture for rapid multi-project delivery.</li>
-              <li>Developed browser-native interactive systems combining WebGL, WebAudio, and real-time UI logic.</li>
+              <li>Delivered production websites and web applications for client organizations, prioritizing performance, SEO architecture, and maintainable structure.</li>
+              <li>Designed and built React dashboards, internal tools, and browser-based applications integrated with Node APIs and database workflows.</li>
+              <li>Established reusable frontend architecture, component systems, and deployment templates that reduced delivery time across projects by an estimated 25-40%.</li>
+              <li>Implemented full production setups including domains, hosting, CI/CD, analytics instrumentation, and monitoring.</li>
+              <li>Developed interactive browser-native systems combining WebGL rendering, WebAudio pipelines, and real-time UI logic.</li>
+              <li>Led projects from technical scoping through deployment, ensuring stability, performance, and clean handoff documentation.</li>
             </ul>
+            <p className="lead-line">
+              Selected projects:{' '}
+              <a href="https://ironsignalworks.com/#work-start" target="_blank" rel="noreferrer">
+                https://ironsignalworks.com/#work-start
+              </a>
+            </p>
 
             <p className="role-title">
-              <strong>Carpe Data - Analyst, Product Delivery (2021-2024)</strong>
+              <strong>Carpe Data - Analyst, Product Delivery</strong>
             </p>
+            <p className="lead-line">2021 - 2024</p>
             <ul>
-              <li>Improved dashboard load times by 35% through query restructuring, caching strategy, and frontend optimization.</li>
-              <li>Automated reporting workflows and improved data pipeline reliability across product operations.</li>
+              <li>Improved dashboard load times by 35% through frontend optimization, caching strategy, and query restructuring.</li>
+              <li>Automated reporting workflows, increasing reliability of operational data delivery.</li>
               <li>Enhanced fraud detection workflows, reducing manual review time and improving decision accuracy.</li>
               <li>Delivered production features in cross-functional collaboration with engineering and product teams.</li>
             </ul>
@@ -696,39 +772,81 @@ export default function App() {
 
           <section className="cv-page page-2">
             <h2>Technical Stack</h2>
-            <p>
-              <strong>Web &amp; Runtime:</strong> JavaScript &middot; TypeScript &middot; React &middot; Node.js &middot; Express &middot; Vite
-              &middot; Tailwind &middot; REST APIs
-            </p>
-            <p>
-              <strong>Graphics &amp; Interactive Systems:</strong> Canvas &middot; WebGL &middot; Three.js &middot; GLSL &middot; Procedural
-              visuals
-            </p>
-            <p>
-              <strong>Audio &amp; Interactive:</strong> WebAudio API &middot; Max/MSP &middot; p5.js &middot; DSP chains &middot; UI sound
-              systems
-            </p>
-            <p>
-              <strong>Data &amp; Ops:</strong> MongoDB &middot; Supabase &middot; SQLite &middot; SQL &middot; Python (Data) &middot; CI/CD
-              &middot; Docker &middot; Railway &middot; Render &middot; Vercel &middot; Netlify
-            </p>
-            <p>
-              <strong>Design &amp; Tooling:</strong> Figma &middot; Adobe CC &middot; UX engineering &amp; prototyping
-            </p>
+            <div className="tech-stack">
+              <div className="stack-group">
+                <p className="stack-label">Frontend &amp; Runtime</p>
+                <div className="pill-row">
+                  <span className="tech-pill">JavaScript</span>
+                  <span className="tech-pill">TypeScript</span>
+                  <span className="tech-pill">React</span>
+                  <span className="tech-pill">Node.js</span>
+                  <span className="tech-pill">Express</span>
+                  <span className="tech-pill">Vite</span>
+                  <span className="tech-pill">Tailwind</span>
+                  <span className="tech-pill">REST APIs</span>
+                </div>
+              </div>
+              <div className="stack-group">
+                <p className="stack-label">Graphics &amp; Interactive</p>
+                <div className="pill-row">
+                  <span className="tech-pill">Canvas</span>
+                  <span className="tech-pill">WebGL</span>
+                  <span className="tech-pill">Three.js</span>
+                  <span className="tech-pill">GLSL</span>
+                  <span className="tech-pill">procedural visuals</span>
+                </div>
+              </div>
+              <div className="stack-group">
+                <p className="stack-label">Audio &amp; Interaction</p>
+                <div className="pill-row">
+                  <span className="tech-pill">WebAudio API</span>
+                  <span className="tech-pill">p5.js</span>
+                  <span className="tech-pill">Max/MSP</span>
+                  <span className="tech-pill">DSP chains</span>
+                  <span className="tech-pill">UI sound systems</span>
+                </div>
+              </div>
+              <div className="stack-group">
+                <p className="stack-label">Data &amp; Infrastructure</p>
+                <div className="pill-row">
+                  <span className="tech-pill">MongoDB</span>
+                  <span className="tech-pill">Supabase</span>
+                  <span className="tech-pill">SQLite</span>
+                  <span className="tech-pill">SQL</span>
+                  <span className="tech-pill">Python (data workflows)</span>
+                  <span className="tech-pill">CI/CD</span>
+                  <span className="tech-pill">Docker</span>
+                  <span className="tech-pill">Railway</span>
+                  <span className="tech-pill">Render</span>
+                </div>
+              </div>
+              <div className="stack-group">
+                <p className="stack-label">Design &amp; Tooling</p>
+                <div className="pill-row">
+                  <span className="tech-pill">Figma</span>
+                  <span className="tech-pill">Adobe CC</span>
+                  <span className="tech-pill">UX engineering</span>
+                  <span className="tech-pill">rapid prototyping</span>
+                </div>
+              </div>
+            </div>
 
             <h2>Interactive Systems &amp; Creative Engineering</h2>
             <ul>
-              <li>Design and implementation of browser-native interactive audio systems and visual engines.</li>
-              <li>Development of responsive UI sound suites, adaptive audio environments, and sequencing tools.</li>
-              <li>Integration of visual/audio pipelines for interactive media and live capture workflows.</li>
+              <li>Design and implementation of browser-native audio engines and visual systems.</li>
+              <li>Development of adaptive UI sound environments and sequencing tools.</li>
+              <li>Integration of audio/visual pipelines for interactive media and real-time workflows.</li>
             </ul>
 
             <h2>Education</h2>
-            <p>Faculdade de Letras da Universidade de Coimbra (FLUC) - Estudos Artisticos - Cinema</p>
+            <p>Faculdade de Letras da Universidade de Coimbra (FLUC)</p>
+            <p>Estudos Artisticos - Cinema</p>
             <p>
-              Complemented by technical training in Python (Data), SQL, Git, Power BI, and web development through self-directed production work.
+              Complemented by professional training in Python, SQL, Git, Power BI, and frontend development.
             </p>
-            <p>Languages: Portuguese (Native), English (C2)</p>
+            <h2>Languages</h2>
+            <p>Portuguese - Native</p>
+            <p>English - C2</p>
           </section>
         </div>
       </div>
