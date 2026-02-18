@@ -45,3 +45,6 @@
 .vs/pedropitadev/FileContentIndex/ae19cd3e-8243-4f12-a280-6b69048ded08.vsidx
 .vs/slnx.sqlite-journal
 .vs/pedropitadev/FileContentIndex/6b33da24-321b-4e06-8b27-340fd531c695.vsidx
+node_modules/
+dist/
+resume/
