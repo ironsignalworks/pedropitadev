@@ -669,12 +669,20 @@ export default function App() {
       /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     if (isMobile) {
-      window.location.href = url.toString();
+      if (!resumeVisibleRef.current) showResumeLayer();
+      window.setTimeout(() => {
+        window.print();
+      }, 120);
       return;
     }
 
     const printTab = window.open(url.toString(), '_blank', 'noopener');
-    if (!printTab) window.location.href = url.toString();
+    if (!printTab) {
+      if (!resumeVisibleRef.current) showResumeLayer();
+      window.setTimeout(() => {
+        window.print();
+      }, 120);
+    }
   };
 
   const onShare = async () => {
