@@ -28,7 +28,14 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isClean = params.get('clean') === '1';
+    const shouldPrint = params.get('print') === '1';
     if (isClean) showResumeLayer();
+    if (shouldPrint) {
+      const timerId = window.setTimeout(() => {
+        window.print();
+      }, 350);
+      return () => window.clearTimeout(timerId);
+    }
   }, []);
 
   useEffect(() => {
@@ -251,12 +258,23 @@ export default function App() {
           const ascender = bb.max.y;
           const baseline = Math.max(bb.min.y, 0);
           const capHeight = Math.max(ascender - baseline, 0.001);
-          const scale = targetHeight / capHeight;
+          let scale = targetHeight / capHeight;
           group.scale.set(scale, scale, 1);
           group.userData.baseScale = scale;
 
-          const widthWorld = (bb.max.x - bb.min.x) * scale;
-          const worldHeight = (bb.max.y - bb.min.y) * scale;
+          let widthWorld = (bb.max.x - bb.min.x) * scale;
+          let worldHeight = (bb.max.y - bb.min.y) * scale;
+
+          const maxWidth = currentAspect * 2 - 0.24;
+          const maxHeight = 2 - 0.24;
+          const fitScale = Math.min(1, maxWidth / Math.max(widthWorld, 0.001), maxHeight / Math.max(worldHeight, 0.001));
+          if (fitScale < 1) {
+            scale *= fitScale;
+            group.scale.set(scale, scale, 1);
+            group.userData.baseScale = scale;
+            widthWorld = (bb.max.x - bb.min.x) * scale;
+            worldHeight = (bb.max.y - bb.min.y) * scale;
+          }
 
           const hitboxGeom = new THREE.PlaneGeometry(widthWorld + 0.1, worldHeight + 0.1);
           const hitboxMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthTest: false });
@@ -270,29 +288,78 @@ export default function App() {
         }
 
         const padding = 0.1;
+        const maxAnimatedScale = 1.12;
         const maxAttempts = 100;
+        const getSafeAreaInsetPx = () => {
+          const probe = document.createElement('div');
+          probe.style.position = 'fixed';
+          probe.style.visibility = 'hidden';
+          probe.style.pointerEvents = 'none';
+          probe.style.paddingTop = 'env(safe-area-inset-top)';
+          probe.style.paddingRight = 'env(safe-area-inset-right)';
+          probe.style.paddingBottom = 'env(safe-area-inset-bottom)';
+          probe.style.paddingLeft = 'env(safe-area-inset-left)';
+          document.body.appendChild(probe);
+          const styles = window.getComputedStyle(probe);
+          const inset = {
+            top: parseFloat(styles.paddingTop) || 0,
+            right: parseFloat(styles.paddingRight) || 0,
+            bottom: parseFloat(styles.paddingBottom) || 0,
+            left: parseFloat(styles.paddingLeft) || 0,
+          };
+          probe.remove();
+          return inset;
+        };
+        const safeInsetPx = getSafeAreaInsetPx();
+        const isMobileViewport = window.matchMedia('(max-width: 720px)').matches;
+        const mobileEdgeBiasPx = isMobileViewport
+          ? { top: 10, right: 20, bottom: 34, left: 10 }
+          : { top: 0, right: 0, bottom: 0, left: 0 };
+        const viewportPaddingWorld = 0.03;
+        const getEffectiveBounds = (width, height) => ({
+          width: width * maxAnimatedScale,
+          height: height * maxAnimatedScale,
+        });
+        const getPlacementBounds = (width, height) => {
+          const effective = getEffectiveBounds(width, height);
+          const worldPerPxX = (2 * currentAspect) / Math.max(window.innerWidth, 1);
+          const worldPerPxY = 2 / Math.max(window.innerHeight, 1);
+
+          const leftInsetWorld = (safeInsetPx.left + mobileEdgeBiasPx.left) * worldPerPxX + viewportPaddingWorld;
+          const rightInsetWorld = (safeInsetPx.right + mobileEdgeBiasPx.right) * worldPerPxX + viewportPaddingWorld;
+          const topInsetWorld = (safeInsetPx.top + mobileEdgeBiasPx.top) * worldPerPxY + viewportPaddingWorld;
+          const bottomInsetWorld =
+            (safeInsetPx.bottom + mobileEdgeBiasPx.bottom) * worldPerPxY + viewportPaddingWorld;
+
+          const left = -currentAspect + effective.width / 2 + padding + leftInsetWorld;
+          const right = currentAspect - effective.width / 2 - padding - rightInsetWorld;
+          const bottom = -1 + effective.height / 2 + padding + bottomInsetWorld;
+          const top = 1 - effective.height / 2 - padding - topInsetWorld;
+
+          return { left, right, top, bottom };
+        };
 
         const isOverlapping = (x, y, width, height, existing) => {
+          const target = getEffectiveBounds(width, height);
           for (const word of existing) {
-            const bounds = word.userData.bounds;
+            const bounds = getEffectiveBounds(word.userData.bounds.width, word.userData.bounds.height);
             const dx = Math.abs(x - word.position.x);
             const dy = Math.abs(y - word.position.y);
-            const minDistX = (width + bounds.width) / 2 + padding;
-            const minDistY = (height + bounds.height) / 2 + padding;
+            const minDistX = (target.width + bounds.width) / 2 + padding;
+            const minDistY = (target.height + bounds.height) / 2 + padding;
             if (dx < minDistX && dy < minDistY) return true;
           }
           return false;
         };
 
         const findRandomPosition = (width, height, existing) => {
-          const marginX = width / 2 + padding;
-          const marginY = height / 2 + padding;
-          const maxX = currentAspect - marginX;
-          const maxY = 1 - marginY;
+          const bounds = getPlacementBounds(width, height);
+          const canFitX = bounds.left <= bounds.right;
+          const canFitY = bounds.bottom <= bounds.top;
 
           for (let i = 0; i < maxAttempts; i += 1) {
-            const x = (Math.random() * 2 - 1) * maxX;
-            const y = (Math.random() * 2 - 1) * maxY;
+            const x = canFitX ? bounds.left + Math.random() * (bounds.right - bounds.left) : 0;
+            const y = canFitY ? bounds.bottom + Math.random() * (bounds.top - bounds.bottom) : 0;
             if (!isOverlapping(x, y, width, height, existing)) return { x, y };
           }
 
@@ -408,12 +475,16 @@ export default function App() {
         };
 
         const clampPosition = (word) => {
-          const bounds = word.userData.bounds;
-          const maxX = currentAspect - bounds.width / 2 - padding;
-          const maxY = 1 - bounds.height / 2 - padding;
-          word.position.x = Math.max(-maxX, Math.min(maxX, word.position.x));
-          word.position.y = Math.max(-maxY, Math.min(maxY, word.position.y));
+          const bounds = getPlacementBounds(word.userData.bounds.width, word.userData.bounds.height);
+          const minX = Math.min(bounds.left, bounds.right);
+          const maxX = Math.max(bounds.left, bounds.right);
+          const minY = Math.min(bounds.bottom, bounds.top);
+          const maxY = Math.max(bounds.bottom, bounds.top);
+          word.position.x = Math.max(minX, Math.min(maxX, word.position.x));
+          word.position.y = Math.max(minY, Math.min(maxY, word.position.y));
         };
+
+        for (const word of draggableWords) clampPosition(word);
 
         const triggerActionAtPointer = (pickupPadding = 0.26) => {
           if (resumeVisibleRef.current) return false;
@@ -589,7 +660,21 @@ export default function App() {
   }, []);
 
   const onDownload = () => {
-    window.print();
+    const url = new URL(window.location.href);
+    url.searchParams.set('clean', '1');
+    url.searchParams.set('print', '1');
+
+    const isMobile =
+      window.matchMedia('(max-width: 720px)').matches ||
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.location.href = url.toString();
+      return;
+    }
+
+    const printTab = window.open(url.toString(), '_blank', 'noopener');
+    if (!printTab) window.location.href = url.toString();
   };
 
   const onShare = async () => {
@@ -629,16 +714,6 @@ export default function App() {
     <>
       <div id="error" style={{ display: error ? 'block' : 'none' }}>
         {error}
-      </div>
-
-      <div id="mobileCTA" aria-label="Mobile resume controls">
-        <span>Need a resume?</span>
-        <button className="mobileCTA__btn" type="button" id="mobileResumeBtn" onClick={showResumeLayer}>
-          View resume
-        </button>
-        <a className="mobileCTA__link" href="mailto:hello@pedropita.dev">
-          Email
-        </a>
       </div>
 
       {!resumeVisible && (
