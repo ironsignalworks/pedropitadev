@@ -668,30 +668,33 @@ export default function App() {
             if (event.target === event.currentTarget) hideResumeLayer();
           }}
         >
-        <div className="resume-content">
-          <div className="actions">
-            <button className="btn" id="shareBtn" type="button" onClick={onShare}>
-              {shareLabel}
-            </button>
-            <button className="btn" id="downloadBtn" type="button" onClick={onDownload}>
-              Download PDF
-            </button>
-          </div>
-
-          <section className="cv-page page-1">
-            <h1>Pedro Pita</h1>
-            <p className="lead-line">Frontend Developer &middot; React Systems &middot; Web Interfaces</p>
-            <p className="lead-line">
-              Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
-            </p>
-            <p className="lead-line">
-              <a href="https://www.linkedin.com/in/pedropitadev/" target="_blank" rel="noreferrer">
-                LinkedIn
-              </a>
-              {' '} &middot;{' '}
-              <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> &middot;{' '}
-              <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a>
-            </p>
+        <div className="resume-content cv cv-panel">
+          <section className="cv-page page-1 section">
+            <header>
+              <div className="header-top">
+                <h1>Pedro Pita</h1>
+                <div className="actions actions--header">
+                  <button className="btn" id="shareBtn" type="button" onClick={onShare}>
+                    {shareLabel}
+                  </button>
+                  <button className="btn" id="downloadBtn" type="button" onClick={onDownload}>
+                    Download PDF
+                  </button>
+                </div>
+              </div>
+              <p className="lead-line">Frontend Developer &middot; React Systems &middot; Web Interfaces</p>
+              <p className="lead-line">
+                Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
+              </p>
+              <p className="lead-line">
+                <a href="https://www.linkedin.com/in/pedropitadev/" target="_blank" rel="noreferrer">
+                  LinkedIn
+                </a>
+                {' '} &middot;{' '}
+                <a href="https://ironsignalworks.com" target="_blank" rel="noreferrer">ironsignalworks.com</a> &middot;{' '}
+                <a href="https://github.com/IronSignalWorks" target="_blank" rel="noreferrer">GitHub</a>
+              </p>
+            </header>
 
             <h2>Summary</h2>
             <p>
@@ -770,7 +773,7 @@ export default function App() {
             </ul>
           </section>
 
-          <section className="cv-page page-2">
+          <section className="cv-page page-2 section">
             <h2>Technical Stack</h2>
             <div className="tech-stack">
               <div className="stack-group">

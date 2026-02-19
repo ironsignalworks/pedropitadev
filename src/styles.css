@@ -2,11 +2,29 @@
   --bg-main: #0b0f13;
   --bg-panel: rgba(16, 22, 28, 0.82);
   --bg-elev: rgba(22, 30, 38, 0.92);
+  --panel-bg: rgba(16, 22, 28, 0.78);
+  --panel-blur: 14px;
+  --panel-sat: 1.08;
+  --panel-contrast: 1.06;
+  --panel-border: rgba(255, 255, 255, 0.07);
+  --panel-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
   --accent: #8fb3c7;
   --accent-strong: #b7d2e0;
+  --link-underline: rgba(143, 179, 199, 0.55);
   --text-primary: rgba(235, 240, 245, 0.95);
   --text-secondary: rgba(180, 192, 205, 0.88);
   --text-muted: rgba(150, 162, 175, 0.7);
+  --space-1: 6px;
+  --space-2: 10px;
+  --space-3: 14px;
+  --space-4: 20px;
+  --space-5: 28px;
+  --space-6: 40px;
+  --space-7: 56px;
+  --radius-1: 10px;
+  --radius-2: 14px;
+  --radius-3: 18px;
+  --line: rgba(255, 255, 255, 0.06);
   --border-subtle: rgba(255, 255, 255, 0.06);
   --resume-font: 'Public Sans', system-ui, sans-serif;
   --resume-heading: 'Literata', serif;
@@ -111,9 +129,6 @@ body.hover-link {
   margin: 0 auto;
   color: var(--text-primary);
   line-height: 1.6;
-  background: var(--bg-elev);
-  padding: 2.4rem 1.8rem 1.8rem;
-  border: 1px solid var(--border-subtle);
 }
 
 #resumeLayer .resume-content h1 {
@@ -207,8 +222,25 @@ body.hover-link {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-5);
   gap: 0.5rem;
+}
+
+#resumeLayer .actions--header {
+  margin-top: 0;
+  margin-bottom: 0;
+  gap: 0.4rem;
+}
+
+#resumeLayer .header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+#resumeLayer .header-top h1 {
+  margin: 0;
 }
 
 #resumeLayer .btn {
@@ -231,6 +263,20 @@ body.hover-link {
   transform: translateY(1px);
 }
 
+#resumeLayer .actions--header .btn {
+  border-color: rgba(143, 179, 199, 0.26);
+  background: rgba(22, 30, 38, 0.34);
+  color: rgba(235, 240, 245, 0.9);
+  font-size: 0.76rem;
+  letter-spacing: 0.01em;
+  padding: 0.22rem 0.48rem;
+  opacity: 0.92;
+}
+
+#resumeLayer .actions--header .btn:hover {
+  border-color: rgba(183, 210, 224, 0.5);
+}
+
 #resumeLayer h1,
 #resumeLayer h2,
 #resumeLayer h3,
@@ -249,8 +295,93 @@ body.hover-link {
   color: var(--text-primary);
 }
 
+#resumeLayer .cv {
+  padding: var(--space-7) var(--space-6);
+}
+
+#resumeLayer .cv header {
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 720px) {
+  #resumeLayer .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+#resumeLayer .cv-panel {
+  background:
+    linear-gradient(180deg, rgba(22, 30, 38, 0.72), rgba(16, 22, 28, 0.82));
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  border-radius: 0;
+  backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-sat)) contrast(var(--panel-contrast));
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(var(--panel-sat)) contrast(var(--panel-contrast));
+}
+
+#resumeLayer .section {
+  margin-top: var(--space-6);
+}
+
+#resumeLayer .section:first-of-type {
+  margin-top: 0;
+}
+
+#resumeLayer .section h2 {
+  margin: 0 0 var(--space-3);
+}
+
+#resumeLayer .section .block {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: rgba(22, 30, 38, 0.55);
+}
+
+#resumeLayer .skill-group,
+#resumeLayer .stack-group {
+  gap: var(--space-3);
+}
+
 #resumeLayer a {
   color: var(--accent);
+  text-decoration: none;
+  position: relative;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+#resumeLayer a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--link-underline);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+
+#resumeLayer a:hover {
+  color: var(--accent-strong);
+}
+
+#resumeLayer a:hover::after {
+  transform: scaleX(1);
+}
+
+#resumeLayer a:focus-visible {
+  outline: 2px solid rgba(183, 210, 224, 0.55);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+#resumeLayer .nav a:hover {
+  opacity: 0.95;
 }
 
 #resumeLayer .meta {
@@ -375,6 +506,10 @@ body.hover-link {
     padding: 1.25rem;
   }
 
+  #resumeLayer .cv {
+    padding: var(--space-5) var(--space-4);
+  }
+
   #resumeLayer .skills-grid {
     grid-template-columns: 1fr;
   }
@@ -390,8 +525,19 @@ body.hover-link {
 
 @media print {
   @page {
-    margin: 6mm;
+    margin: 5mm;
     size: A4 portrait;
+  }
+
+  :root {
+    --bg-main: #ffffff !important;
+    --panel-bg: #ffffff !important;
+    --text-primary: #111827 !important;
+    --text-secondary: #374151 !important;
+    --text-muted: #6b7280 !important;
+    --accent: #1f4b66 !important;
+    --accent-strong: #1f4b66 !important;
+    --line: #e5e7eb !important;
   }
 
   html,
@@ -399,9 +545,10 @@ body.hover-link {
     margin: 0;
     height: auto;
     overflow: visible;
+    background: #ffffff !important;
+    color: var(--text-primary) !important;
     font-size: 9pt;
-    background: #fff;
-    color: #111;
+    line-height: 1.22;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -413,6 +560,13 @@ body.hover-link {
     display: none !important;
   }
 
+  canvas,
+  .shader,
+  .bg-shader,
+  .fx {
+    display: none !important;
+  }
+
   #resumeLayer {
     position: static;
     inset: auto;
@@ -420,8 +574,8 @@ body.hover-link {
     overflow: visible;
     transform: translateY(0) !important;
     pointer-events: none;
-    background: #fff;
-    color: #111;
+    background: #ffffff !important;
+    color: var(--text-primary) !important;
     padding: 0;
     scrollbar-width: none;
     box-shadow: none;
@@ -431,17 +585,48 @@ body.hover-link {
 
   #resumeLayer .resume-content {
     max-width: 100%;
-    padding: 0.45rem 0 0;
-    font-size: 8.5pt;
-    line-height: 1.26;
-    color: #111;
-    background: #fff !important;
+    padding: 0;
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    zoom: 0.9;
+    line-height: 1.2;
+  }
+
+  #resumeLayer .cv {
+    padding: 0 !important;
+  }
+
+  #resumeLayer .cv header {
+    padding-bottom: 0.28rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  #resumeLayer .section {
+    margin-top: 0.5rem !important;
+  }
+
+  #resumeLayer .section h2 {
+    margin: 0 0 0.2rem !important;
   }
 
   #resumeLayer .resume-content p,
   #resumeLayer .resume-content .meta {
-    margin: 0 0 0.34rem;
-    color: #222;
+    margin: 0 0 0.24rem !important;
+    color: var(--text-secondary) !important;
+  }
+
+  #resumeLayer .resume-content ul {
+    margin: 0 0 0.24rem !important;
+    padding-left: 0.9rem !important;
+  }
+
+  #resumeLayer .resume-content li {
+    margin-bottom: 0.12rem !important;
+    line-height: 1.2 !important;
   }
 
   #resumeLayer .resume-content .actions {
@@ -449,132 +634,75 @@ body.hover-link {
   }
 
   #resumeLayer .resume-content h1 {
-    font-size: 14pt;
-    margin: 0 0 0.46rem;
-    line-height: 1.1;
-    color: #000;
-    letter-spacing: 0.01em;
+    margin: 0 0 0.24rem !important;
+    font-size: 14pt !important;
+    line-height: 1.1 !important;
+    color: var(--text-primary) !important;
   }
 
   #resumeLayer .resume-content h2 {
-    font-size: 9pt;
-    margin: 0.95rem 0 0.34rem;
-    padding-bottom: 0.1rem;
-    line-height: 1.1;
-    color: #000;
-    border-bottom: 1px solid #d9d9d9;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.2rem !important;
+    font-size: 9.1pt !important;
+    line-height: 1.14 !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--line) !important;
   }
 
   #resumeLayer .resume-content h3 {
-    font-size: 8.3pt;
-    margin: 0.24rem 0 0.12rem;
-    line-height: 1.1;
-    color: #111;
-  }
-
-  #resumeLayer .resume-content ul {
-    margin: 0.14rem 0 0.32rem;
-    padding-left: 0.9rem;
-  }
-
-  #resumeLayer .resume-content li {
-    margin-bottom: 0.1rem;
-    line-height: 1.18;
-    color: #222;
-  }
-
-  #resumeLayer .skills-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.24rem 0.44rem;
-    margin-bottom: 0.28rem;
+    margin: 0 0 0.1rem !important;
+    font-size: 8.3pt !important;
+    line-height: 1.12 !important;
+    color: var(--text-primary) !important;
   }
 
   #resumeLayer .lead-line,
   #resumeLayer .role-title {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.18rem !important;
   }
 
-  #resumeLayer .lead-line {
-    font-size: 8.1pt;
-    color: #333;
+  #resumeLayer .skills-grid,
+  #resumeLayer .tech-stack {
+    gap: 0.2rem 0.3rem !important;
+    margin-bottom: 0.24rem !important;
   }
 
-  #resumeLayer .role-title {
-    margin-top: 0.2rem;
+  #resumeLayer .pill-row {
+    gap: 0.12rem !important;
   }
 
+  #resumeLayer a {
+    color: var(--accent) !important;
+  }
+
+  #resumeLayer a::after {
+    display: none !important;
+  }
+
+  #resumeLayer .section,
+  #resumeLayer .block,
+  #resumeLayer .job,
   #resumeLayer .cv-page {
-    margin-bottom: 0.78rem;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  #resumeLayer a {
-    color: #111;
-    text-decoration: none;
-  }
-
-  #resumeLayer,
-  #resumeLayer .resume-content,
-  #resumeLayer .resume-content * {
-    background-color: transparent;
-    color: #111 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-
-  #resumeLayer,
-  #resumeLayer .resume-content {
-    background: #fff !important;
-  }
-
-  #resumeLayer .resume-content h2 {
-    border-bottom-color: #cfcfcf;
-  }
-
-  #resumeLayer .tech-stack {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.28rem 0.44rem;
-    margin-bottom: 0.32rem;
-  }
-
-  #resumeLayer .stack-group {
-    gap: 0.14rem;
-  }
-
-  #resumeLayer .stack-label {
-    font-size: 7.8pt;
-    color: #111 !important;
-  }
-
-  #resumeLayer .pill-row {
-    gap: 0.12rem 0.16rem;
+  #resumeLayer .cv-page {
+    margin: 0.3rem 0 0 !important;
   }
 
   #resumeLayer .tech-pill {
-    border: 1px solid #b9b9b9;
-    background: #f8f8f8 !important;
-    color: #111 !important;
-    padding: 0.06rem 0.28rem;
-    min-height: 0;
-    font-size: 7.2pt;
-    line-height: 1.06;
+    border: 1px solid var(--line) !important;
+    background: #ffffff !important;
+    color: var(--text-primary) !important;
+    padding: 0.06rem 0.24rem !important;
+    min-height: 0 !important;
+    font-size: 7.2pt !important;
+    line-height: 1.1 !important;
   }
 
-  #resumeLayer p,
-  #resumeLayer li {
-    orphans: 3;
-    widows: 3;
-  }
-
-  #resumeLayer h1,
-  #resumeLayer h2,
-  #resumeLayer h3,
-  #resumeLayer h4,
-  #resumeLayer h5,
-  #resumeLayer h6 {
-    color: #111;
+  #resumeLayer .section .block {
+    background: #ffffff !important;
+    border: 1px solid var(--line) !important;
   }
 }
