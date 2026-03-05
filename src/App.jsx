@@ -15,7 +15,6 @@ export default function App() {
   const [error, setError] = useState('');
 
   const showResumeLayer = () => {
-    if (resumeLayerRef.current) resumeLayerRef.current.scrollTop = 0;
     resumeVisibleRef.current = true;
     setResumeVisible(true);
   };
@@ -84,30 +83,23 @@ export default function App() {
               vec2 mouse = (uMouse * 2.0 - 1.0) * vec2(uAspect, 1.0);
               float dist = length(centered - mouse);
 
-              float t = uTime * 0.18 + uSeed;
-              float x = uv.x * 6.0 + t;
-              float y = uv.y * 6.0 - t * 0.6 + uSeed * 0.5;
-
-              float v1 = sin(x + uSeed);
-              float v2 = cos(y);
-              float v3 = sin(x + y + uSeed * 0.3);
-              float ripple = sin(dist * 12.0 - t * 3.0 + uSeed) * 0.7;
-              float v = v1 * 0.5 + v2 * 0.5 + v3 * 0.5 + ripple;
-
-              vec3 base = sin(vec3(v, v + 1.57, v + 3.14159));
-
-              float ang = uTime * 0.6 + uSeed * 0.2;
-              float ca = cos(ang);
-              float sa = sin(ang);
-
-              mat3 rot = mat3(
-                ca, -sa, 0.0,
-                sa,  ca, 0.0,
-                0.0, 0.0, 1.0
+              float t = uTime * 0.24 + uSeed * 0.21;
+              vec2 flowUv = uv + vec2(
+                sin(t * 0.9 + uv.y * 6.5) * 0.045,
+                cos(t * 0.75 + uv.x * 5.8) * 0.04
               );
+              float bandA = sin((flowUv.x * 4.7 + flowUv.y * 2.9) + t) * 0.5 + 0.5;
+              float bandB = cos((flowUv.y * 5.8 - flowUv.x * 2.0) - t * 0.95) * 0.5 + 0.5;
+              float ripple = sin(dist * 9.0 - t * 2.0) * 0.5 + 0.5;
+              float mixWave = bandA * 0.45 + bandB * 0.4 + ripple * 0.15;
 
-              vec3 col = rot * base;
-              col = pow(col * 0.5 + 0.5, vec3(1.1));
+              vec3 charcoal = vec3(0.055, 0.058, 0.070);
+              vec3 softIndigo = vec3(0.17, 0.20, 0.30);
+              vec3 deepIndigo = vec3(0.11, 0.13, 0.20);
+              vec3 grad = mix(charcoal, softIndigo, smoothstep(0.0, 1.0, flowUv.x * 0.32 + flowUv.y * 0.85));
+              vec3 col = mix(grad, deepIndigo, mixWave * 0.35);
+              col *= 0.92 + mixWave * 0.14;
+              col = pow(col, vec3(1.05));
 
               gl_FragColor = vec4(col, 1.0);
             }
@@ -131,82 +123,25 @@ export default function App() {
         textRenderer.setSize(window.innerWidth, window.innerHeight);
         textRenderer.setClearColor(0x000000, 0);
 
-        let scrollAccumulator = 0;
-        const scrollThreshold = 100;
-        let touchLastY = null;
-        let touchSwipeAccumulator = 0;
-
-        const onWheel = (event) => {
-          if (resumeVisibleRef.current) {
-            if (resumeLayer.scrollTop <= 0 && event.deltaY < 0) {
-              event.preventDefault();
-              hideResumeLayer();
-              scrollAccumulator = 0;
-            }
-          } else {
-            scrollAccumulator += event.deltaY;
-            if (scrollAccumulator > scrollThreshold) {
-              showResumeLayer();
-              scrollAccumulator = 0;
-            } else if (scrollAccumulator < -scrollThreshold) {
-              scrollAccumulator = 0;
-            }
-          }
-        };
-
-        const onTouchStart = (event) => {
-          if (event.touches.length) {
-            touchLastY = event.touches[0].clientY;
-            touchSwipeAccumulator = 0;
-          }
-        };
-
-        const onTouchMove = (event) => {
-          if (touchLastY === null || !event.touches.length) return;
-          const currentY = event.touches[0].clientY;
-          const deltaY = touchLastY - currentY;
-          touchLastY = currentY;
-
-          if (resumeVisibleRef.current) {
-            if (resumeLayer.scrollTop <= 0 && deltaY < -scrollThreshold * 0.5) {
-              hideResumeLayer();
-            }
-            return;
-          }
-
-          touchSwipeAccumulator += deltaY;
-          if (touchSwipeAccumulator > scrollThreshold) {
-            showResumeLayer();
-            touchSwipeAccumulator = 0;
-          }
-        };
-
-        const onTouchEnd = () => {
-          touchLastY = null;
-        };
-
-        window.addEventListener('wheel', onWheel, { passive: false });
-        window.addEventListener('touchstart', onTouchStart, { passive: true });
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
-        window.addEventListener('touchend', onTouchEnd, { passive: true });
-
         const fontLoader = new FontLoader();
         const font = await fontLoader.loadAsync(helvetikerUrl);
 
-        const fillMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, depthTest: false });
-        const strokeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, depthTest: false });
+        const fillMat = new THREE.MeshBasicMaterial({ color: 0xe4e9ee, side: THREE.DoubleSide, depthTest: false });
+        const strokeMat = new THREE.MeshBasicMaterial({ color: 0xe4e9ee, side: THREE.DoubleSide, depthTest: false });
         const responsiveScale = Math.min(1, Math.max(window.innerWidth / 900, 0.65));
         const H1 = 0.10 * responsiveScale;
 
         const wordSpecs = [
-          { text: 'Pedro Pita', height: H1, action: 'resume' },
+          { text: 'Pedro Pita', height: H1 },
           { text: 'Resume', height: H1 * 0.6, action: 'resume' },
           { text: 'Studio', height: H1 * 0.48, url: 'https://ironsignalworks.com' },
           { text: 'hello@pedropita.dev', height: H1 * 0.38, url: 'mailto:hello@pedropita.dev' },
         ];
+        const DEFAULT_DRAG_PICKUP_OFFSET = -0.2;
+        const DEFAULT_INTERACTIVE_PICKUP_OFFSET = 0;
 
-        const WHITE = new THREE.Color(0xffffff);
-        const HOVER = new THREE.Color(0x9fd4ff);
+        const WHITE = new THREE.Color(0xe4e9ee);
+        const HOVER = new THREE.Color(0xb8d2e6);
         const clickables = [];
         const draggableWords = [];
         let lastHover = null;
@@ -379,6 +314,9 @@ export default function App() {
           wordGroup.userData.pulseScale = 1;
           wordGroup.userData.pulseOffset = Math.random() * Math.PI * 2;
           wordGroup.userData.pulseMix = 0;
+          wordGroup.userData.dragPickupOffset = spec.dragPickupOffset ?? DEFAULT_DRAG_PICKUP_OFFSET;
+          wordGroup.userData.interactivePickupOffset =
+            spec.interactivePickupOffset ?? DEFAULT_INTERACTIVE_PICKUP_OFFSET;
           wordGroup.userData.applyScale = () => applyCombinedScale(wordGroup);
 
           if (spec.url || spec.action) {
@@ -417,13 +355,14 @@ export default function App() {
           pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
         };
 
-        const findInteractiveWordAt = (worldX, worldY, pickupPadding = 0.22) => {
+        const findInteractiveWordAt = (worldX, worldY, pickupPadding = 0) => {
           let bestTarget = null;
           let bestScore = Number.POSITIVE_INFINITY;
           for (const word of clickables) {
             const bounds = word.userData.bounds;
-            const halfW = bounds.width / 2 + pickupPadding;
-            const halfH = bounds.height / 2 + pickupPadding;
+            const extraPickup = Math.min(0, word.userData.interactivePickupOffset || 0);
+            const halfW = bounds.width / 2 + pickupPadding + extraPickup;
+            const halfH = bounds.height / 2 + pickupPadding + extraPickup;
             const dx = worldX - word.position.x;
             const dy = worldY - word.position.y;
             if (Math.abs(dx) <= halfW && Math.abs(dy) <= halfH) {
@@ -462,7 +401,7 @@ export default function App() {
 
           const worldX = pointer.x * currentAspect;
           const worldY = pointer.y;
-          const hoverGroup = findInteractiveWordAt(worldX, worldY, 0.2);
+          const hoverGroup = findInteractiveWordAt(worldX, worldY, 0);
 
           if (hoverGroup !== lastHover) {
             if (lastHover) lastHover.userData.setHover(false);
@@ -486,7 +425,7 @@ export default function App() {
 
         for (const word of draggableWords) clampPosition(word);
 
-        const triggerActionAtPointer = (pickupPadding = 0.26) => {
+        const triggerActionAtPointer = (pickupPadding = 0) => {
           if (resumeVisibleRef.current) return false;
           const worldX = pointer.x * currentAspect;
           const worldY = pointer.y;
@@ -524,8 +463,9 @@ export default function App() {
           // Use an expanded rectangular pickup zone around each word.
           for (const word of draggableWords) {
             const bounds = word.userData.bounds;
-            const halfW = bounds.width / 2 + pickupPadding;
-            const halfH = bounds.height / 2 + pickupPadding;
+            const dragPickup = Math.max(-0.22, word.userData.dragPickupOffset || 0);
+            const halfW = bounds.width / 2 + pickupPadding + dragPickup;
+            const halfH = bounds.height / 2 + pickupPadding + dragPickup;
             const dx = worldX - word.position.x;
             const dy = worldY - word.position.y;
             if (Math.abs(dx) <= halfW && Math.abs(dy) <= halfH) {
@@ -636,10 +576,6 @@ export default function App() {
 
         cleanup = () => {
           window.cancelAnimationFrame(rafId);
-          window.removeEventListener('wheel', onWheel);
-          window.removeEventListener('touchstart', onTouchStart);
-          window.removeEventListener('touchmove', onTouchMove);
-          window.removeEventListener('touchend', onTouchEnd);
           window.removeEventListener('pointermove', onPointerMove);
           window.removeEventListener('pointerdown', onPointerDown);
           window.removeEventListener('pointerup', onPointerUp);
@@ -691,7 +627,7 @@ export default function App() {
 
     const shareData = {
       title: 'Pedro Pita - Resume',
-      text: 'Resume - Frontend Developer & Web Systems Engineer',
+      text: 'Resume - Frontend Engineer & Web Systems Developer',
       url: url.toString(),
     };
 
@@ -724,22 +660,6 @@ export default function App() {
         {error}
       </div>
 
-      {!resumeVisible && (
-        <div
-          id="scrollCue"
-          role="button"
-          tabIndex={0}
-          onClick={showResumeLayer}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') showResumeLayer();
-          }}
-          aria-label="Scroll to CV"
-        >
-          <span>Scroll to CV</span>
-          <span aria-hidden="true">↓</span>
-        </div>
-      )}
-
       <canvas id="bgCanvas" ref={bgCanvasRef} />
       <canvas id="textCanvas" ref={textCanvasRef} className={resumeVisible ? 'hidden' : ''} />
 
@@ -757,6 +677,9 @@ export default function App() {
               <div className="header-top">
                 <h1>Pedro Pita</h1>
                 <div className="actions actions--header">
+                  <button className="btn" type="button" onClick={hideResumeLayer}>
+                    Close
+                  </button>
                   <button className="btn" id="shareBtn" type="button" onClick={onShare}>
                     {shareLabel}
                   </button>
@@ -765,7 +688,7 @@ export default function App() {
                   </button>
                 </div>
               </div>
-              <p className="lead-line">Frontend Developer &middot; React Systems &middot; Web Interfaces</p>
+              <p className="lead-line">Frontend Engineer &middot; React Systems &middot; Web Interfaces</p>
               <p className="lead-line">
                 Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
               </p>
@@ -781,7 +704,7 @@ export default function App() {
 
             <h2>Summary</h2>
             <p>
-              Frontend developer delivering production web interfaces and browser-native systems for clients and internal platforms.
+              Frontend engineer delivering production web interfaces and browser-native systems for clients and internal platforms.
             </p>
             <p>
               I design and ship performant websites, dashboards, and interactive tools using React, TypeScript, and Node-backed architectures.
@@ -901,8 +824,6 @@ export default function App() {
                   <span className="tech-pill">SQL</span>
                   <span className="tech-pill">Python (data workflows)</span>
                   <span className="tech-pill">CI/CD</span>
-                  <span className="tech-pill">Docker</span>
-                  <span className="tech-pill">Railway</span>
                   <span className="tech-pill">Render</span>
                 </div>
               </div>
@@ -928,7 +849,7 @@ export default function App() {
             <p>Faculdade de Letras da Universidade de Coimbra (FLUC)</p>
             <p>Estudos Artisticos - Cinema</p>
             <p>
-              Complemented by professional training in Python, SQL, Git, Power BI, and frontend development.
+              Complemented by on-the-job training in Python, SQL, Git, Power BI.
             </p>
             <h2>Languages</h2>
             <p>Portuguese - Native</p>
