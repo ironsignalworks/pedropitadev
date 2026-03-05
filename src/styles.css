@@ -151,72 +151,39 @@ body.hover-link {
   margin-bottom: 2.35rem;
 }
 
-#resumeLayer .skills-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem 1rem;
-  margin-bottom: 0.8rem;
-}
-
-#resumeLayer .skill-group h3 {
-  margin: 0 0 0.2rem;
-  font-size: 0.92rem;
-  color: var(--accent);
-}
-
-#resumeLayer .skill-group .pill-row {
-  margin-top: 0.1rem;
-}
-
-#resumeLayer .skill-group p {
-  margin: 0;
-  font-size: 0.92rem;
-}
-
 #resumeLayer .role-title {
   margin-bottom: 0.35rem;
-}
-
-#resumeLayer .tech-stack {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.85rem 1rem;
-  margin-bottom: 1.15rem;
-}
-
-#resumeLayer .stack-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-#resumeLayer .stack-label {
-  margin: 0;
-  color: var(--accent);
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.015em;
-}
-
-#resumeLayer .pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-#resumeLayer .tech-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(158, 183, 204, 0.48);
-  background: rgba(24, 35, 46, 0.88);
   color: var(--text-primary);
-  border-radius: 999px;
-  padding: 0.3rem 0.58rem;
-  min-height: 1.7rem;
-  font-size: 0.82rem;
-  line-height: 1;
-  text-align: center;
+}
+
+#resumeLayer .plain-list {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--text-primary);
+}
+
+#resumeLayer .plain-list li {
+  margin-bottom: 0.38rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+#resumeLayer .plain-list li strong {
+  color: var(--text-primary);
+}
+
+#resumeLayer .cv-key {
+  color: var(--accent-strong);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#resumeLayer .copy-primary {
+  color: var(--text-primary);
+}
+
+#resumeLayer .copy-secondary {
+  color: var(--text-secondary);
 }
 
 #resumeLayer .actions {
@@ -347,11 +314,6 @@ body.hover-link {
   background: rgba(22, 30, 38, 0.55);
 }
 
-#resumeLayer .skill-group,
-#resumeLayer .stack-group {
-  gap: var(--space-3);
-}
-
 #resumeLayer a {
   color: var(--accent);
   text-decoration: none;
@@ -416,14 +378,6 @@ body.hover-link {
 
   #resumeLayer .cv {
     padding: var(--space-5) var(--space-4);
-  }
-
-  #resumeLayer .skills-grid {
-    grid-template-columns: 1fr;
-  }
-
-  #resumeLayer .tech-stack {
-    grid-template-columns: 1fr;
   }
 
 }
@@ -567,14 +521,9 @@ body.hover-link {
     margin-bottom: 0.12rem !important;
   }
 
-  #resumeLayer .skills-grid,
-  #resumeLayer .tech-stack {
-    gap: 0.14rem 0.22rem !important;
-    margin-bottom: 0.16rem !important;
-  }
-
-  #resumeLayer .pill-row {
-    gap: 0.12rem !important;
+  #resumeLayer .plain-list {
+    margin: 0 0 0.16rem !important;
+    padding-left: 0.78rem !important;
   }
 
   #resumeLayer a {
@@ -597,14 +546,9 @@ body.hover-link {
     margin: 0 !important;
   }
 
-  #resumeLayer .tech-pill {
-    border: 1px solid var(--line) !important;
-    background: #ffffff !important;
-    color: var(--text-primary) !important;
-    padding: 0.06rem 0.24rem !important;
-    min-height: 0 !important;
-    font-size: 7.2pt !important;
-    line-height: 1.1 !important;
+  #resumeLayer .plain-list li {
+    margin-bottom: 0.08rem !important;
+    line-height: 1.15 !important;
   }
 
   #resumeLayer .section .block {

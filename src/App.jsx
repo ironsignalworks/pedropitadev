@@ -38,6 +38,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    if (resumeVisible) document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') hideResumeLayer();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [resumeVisible]);
+
+  useEffect(() => {
     let cleanup = () => {};
 
     const init = async () => {
@@ -54,12 +69,15 @@ export default function App() {
         const bgCamera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0, 10);
         bgCamera.position.z = 1;
         const bgScene = new THREE.Scene();
-        const staticMouse = new THREE.Vector2(Math.random(), Math.random());
+        // Premium: subtle, smoothed mouse influence in UV space (0..1)
+        const mouseTargetUv = new THREE.Vector2(Math.random(), Math.random());
+        const mouseUv = new THREE.Vector2(mouseTargetUv.x, mouseTargetUv.y);
+        const centerUv = new THREE.Vector2(0.5, 0.5);
 
         const shaderMaterial = new THREE.ShaderMaterial({
           uniforms: {
             uTime: { value: 0 },
-            uMouse: { value: staticMouse },
+            uMouse: { value: mouseUv },
             uAspect: { value: aspect },
             uSeed: { value: randomSeed },
           },
@@ -90,15 +108,15 @@ export default function App() {
               );
               float bandA = sin((flowUv.x * 4.7 + flowUv.y * 2.9) + t) * 0.5 + 0.5;
               float bandB = cos((flowUv.y * 5.8 - flowUv.x * 2.0) - t * 0.95) * 0.5 + 0.5;
-              float ripple = sin(dist * 9.0 - t * 2.0) * 0.5 + 0.5;
-              float mixWave = bandA * 0.45 + bandB * 0.4 + ripple * 0.15;
+              float ripple = sin(dist * 7.0 - t * 1.6) * 0.5 + 0.5;
+              float mixWave = bandA * 0.48 + bandB * 0.44 + ripple * 0.08;
 
               vec3 charcoal = vec3(0.055, 0.058, 0.070);
               vec3 softIndigo = vec3(0.17, 0.20, 0.30);
               vec3 deepIndigo = vec3(0.11, 0.13, 0.20);
               vec3 grad = mix(charcoal, softIndigo, smoothstep(0.0, 1.0, flowUv.x * 0.32 + flowUv.y * 0.85));
-              vec3 col = mix(grad, deepIndigo, mixWave * 0.35);
-              col *= 0.92 + mixWave * 0.14;
+              vec3 col = mix(grad, deepIndigo, mixWave * 0.28);
+              col *= 0.94 + mixWave * 0.10;
               col = pow(col, vec3(1.05));
 
               gl_FragColor = vec4(col, 1.0);
@@ -119,7 +137,7 @@ export default function App() {
         const textScene = new THREE.Scene();
 
         const textRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, canvas: textCanvas });
-        textRenderer.setPixelRatio(window.devicePixelRatio);
+        textRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         textRenderer.setSize(window.innerWidth, window.innerHeight);
         textRenderer.setClearColor(0x000000, 0);
 
@@ -346,8 +364,8 @@ export default function App() {
         let dragTarget = null;
         let dragOffset = new THREE.Vector2();
         let dragMoved = false;
-        let didDrag = false;
-        let suppressNextClick = false;
+        const pointerDownScreen = new THREE.Vector2();
+        const dragThresholdPx = 6;
 
         const syncPointer = (e) => {
           const rect = textCanvas.getBoundingClientRect();
@@ -435,8 +453,19 @@ export default function App() {
 
         const onPointerMove = (e) => {
           syncPointer(e);
+          // pointer is NDC (-1..1). Convert to UV (0..1)
+          if (!resumeVisibleRef.current) {
+            mouseTargetUv.set(pointer.x * 0.5 + 0.5, pointer.y * 0.5 + 0.5);
+            mouseTargetUv.x = Math.min(0.85, Math.max(0.15, mouseTargetUv.x));
+            mouseTargetUv.y = Math.min(0.85, Math.max(0.15, mouseTargetUv.y));
+          }
           if (dragTarget) {
-            dragMoved = true;
+            if (!dragMoved) {
+              const dxPx = e.clientX - pointerDownScreen.x;
+              const dyPx = e.clientY - pointerDownScreen.y;
+              if (Math.hypot(dxPx, dyPx) >= dragThresholdPx) dragMoved = true;
+            }
+            if (!dragMoved) return;
             const worldX = pointer.x * currentAspect;
             const worldY = pointer.y;
             dragTarget.position.x = worldX - dragOffset.x;
@@ -452,7 +481,7 @@ export default function App() {
           if (resumeVisibleRef.current) return;
           syncPointer(e);
           updateHoverState();
-          didDrag = false;
+          pointerDownScreen.set(e.clientX, e.clientY);
 
           const worldX = pointer.x * currentAspect;
           const worldY = pointer.y;
@@ -488,24 +517,9 @@ export default function App() {
           if (resumeLayer.contains(e.target)) return;
           if (resumeVisibleRef.current) return;
           const wasDragging = dragMoved;
-          didDrag = wasDragging;
           dragTarget = null;
           dragMoved = false;
-          if (!wasDragging && triggerActionAtPointer()) suppressNextClick = true;
-        };
-
-        const onClick = (e) => {
-          if (resumeLayer.contains(e.target)) return;
-          if (resumeVisibleRef.current) return;
-          if (suppressNextClick) {
-            suppressNextClick = false;
-            return;
-          }
-          if (didDrag) {
-            didDrag = false;
-            return;
-          }
-          triggerActionAtPointer();
+          if (!wasDragging) triggerActionAtPointer();
         };
 
         const onResize = () => {
@@ -532,7 +546,6 @@ export default function App() {
         window.addEventListener('pointermove', onPointerMove);
         window.addEventListener('pointerdown', onPointerDown);
         window.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('click', onClick);
         window.addEventListener('resize', onResize);
 
         let rafId = 0;
@@ -540,6 +553,10 @@ export default function App() {
         const animate = (t = 0) => {
           if (introStart === null) introStart = t * 0.001;
           const elapsed = t * 0.001 - introStart;
+          // Premium smoothing: slow follow, tiny influence.
+          const mouseLerp = 0.045;
+          if (resumeVisibleRef.current) mouseTargetUv.lerp(centerUv, 0.02);
+          mouseUv.lerp(mouseTargetUv, mouseLerp);
 
           if (elapsed > 0.05) {
             bgCanvas.classList.add('ready');
@@ -579,10 +596,28 @@ export default function App() {
           window.removeEventListener('pointermove', onPointerMove);
           window.removeEventListener('pointerdown', onPointerDown);
           window.removeEventListener('pointerup', onPointerUp);
-          window.removeEventListener('click', onClick);
           window.removeEventListener('resize', onResize);
           document.body.classList.remove('hover-link');
           textCanvas.classList.remove('hover-link-zone');
+          const disposeMaterial = (material) => {
+            if (!material) return;
+            if (Array.isArray(material)) {
+              for (const mat of material) mat.dispose();
+              return;
+            }
+            material.dispose();
+          };
+          const disposeSceneResources = (scene) => {
+            scene.traverse((obj) => {
+              if (obj.geometry) obj.geometry.dispose();
+              if (obj.material) disposeMaterial(obj.material);
+            });
+          };
+          disposeSceneResources(textScene);
+          if (bgPlane.geometry) bgPlane.geometry.dispose();
+          disposeMaterial(shaderMaterial);
+          fillMat.dispose();
+          strokeMat.dispose();
           bgRenderer.dispose();
           textRenderer.dispose();
         };
@@ -684,11 +719,11 @@ export default function App() {
                     {shareLabel}
                   </button>
                   <button className="btn" id="downloadBtn" type="button" onClick={onDownload}>
-                    Download PDF
+                    Save as PDF
                   </button>
                 </div>
               </div>
-              <p className="lead-line">Frontend Engineer &middot; React Systems &middot; Web Interfaces</p>
+              <p className="lead-line">Frontend Engineer &middot; React &amp; TypeScript &middot; Interactive Web Systems</p>
               <p className="lead-line">
                 Lisbon, Portugal &middot; Remote OK &middot; <a href="mailto:hello@pedropita.dev">hello@pedropita.dev</a>
               </p>
@@ -703,65 +738,39 @@ export default function App() {
             </header>
 
             <h2>Summary</h2>
-            <p>
-              Frontend engineer delivering production web interfaces and browser-native systems for clients and internal platforms.
+            <p className="copy-primary">
+              Frontend engineer building production web applications, developer tools, and interactive browser systems using <span className="cv-key">React</span>, <span className="cv-key">TypeScript</span>, and <span className="cv-key">Node.js</span>.
             </p>
-            <p>
-              I design and ship performant websites, dashboards, and interactive tools using React, TypeScript, and Node-backed architectures.
-              My work emphasizes clean structure, scalability, and reliable handoff so products remain maintainable long after launch.
+            <p className="copy-secondary">
+              Experience includes <span className="cv-key">Agile</span> product delivery, internal developer tooling, interactive browser systems, and full deployment ownership.
             </p>
 
-            <h2>Core Strengths</h2>
-            <div className="skills-grid">
-              <div className="skill-group">
-                <h3>Frontend Systems</h3>
-                <div className="pill-row">
-                  <span className="tech-pill">React</span>
-                  <span className="tech-pill">TypeScript</span>
-                  <span className="tech-pill">component architecture</span>
-                  <span className="tech-pill">performance optimization</span>
-                  <span className="tech-pill">accessibility</span>
-                </div>
-              </div>
-              <div className="skill-group">
-                <h3>Full-Stack Delivery</h3>
-                <div className="pill-row">
-                  <span className="tech-pill">Node.js</span>
-                  <span className="tech-pill">REST APIs</span>
-                  <span className="tech-pill">authentication flows</span>
-                  <span className="tech-pill">databases</span>
-                  <span className="tech-pill">deployment pipelines</span>
-                  <span className="tech-pill">CI/CD</span>
-                </div>
-              </div>
-              <div className="skill-group">
-                <h3>Interactive &amp; Real-Time UI</h3>
-                <div className="pill-row">
-                  <span className="tech-pill">Canvas</span>
-                  <span className="tech-pill">WebGL</span>
-                  <span className="tech-pill">WebAudio</span>
-                  <span className="tech-pill">data visualization</span>
-                  <span className="tech-pill">browser-native applications</span>
-                </div>
-              </div>
-            </div>
+            <h2>Core Competencies</h2>
+            <ul className="plain-list">
+              <li>Frontend engineering with <span className="cv-key">React</span>, <span className="cv-key">TypeScript</span>, and modern <span className="cv-key">JavaScript</span> ecosystems.</li>
+              <li><span className="cv-key">UI architecture</span>, component systems, accessibility standards, and performance optimization.</li>
+              <li>Backend integration with <span className="cv-key">Node.js</span>, <span className="cv-key">REST APIs</span>, authentication flows, and data persistence.</li>
+              <li>Deployment and infrastructure ownership: domains, hosting, <span className="cv-key">CI/CD pipelines</span>, analytics, and monitoring.</li>
+              <li>Interactive browser systems leveraging <span className="cv-key">Canvas</span>, <span className="cv-key">WebGL</span>, and <span className="cv-key">WebAudio APIs</span>.</li>
+              <li><span className="cv-key">Agile delivery environments</span>: sprint planning, backlog refinement, and iterative product releases.</li>
+              <li>Modern development workflows including <span className="cv-key">AI-assisted tooling</span>, automated testing support, and accelerated code review cycles.</li>
+            </ul>
 
             <h2>Experience</h2>
             <p className="role-title">
-              <strong>Iron Signal Works - Frontend Developer &amp; Web Systems Engineer</strong>
+              <strong>Iron Signal Works - Web Systems Engineer</strong>
             </p>
-            <p className="lead-line">2024 - Present &middot; Independent web systems studio</p>
-            <p className="lead-line">Industries: services, creative/media, small commerce, internal tools, experimental digital products</p>
+            <p className="lead-line">2024 - Present &middot; Independent Studio</p>
             <ul>
-              <li>Delivered production websites and web applications for client organizations, prioritizing performance, SEO architecture, and maintainable structure.</li>
-              <li>Designed and built React dashboards, internal tools, and browser-based applications integrated with Node APIs and database workflows.</li>
-              <li>Established reusable frontend architecture, component systems, and deployment templates that reduced delivery time across projects by an estimated 25-40%.</li>
-              <li>Implemented full production setups including domains, hosting, CI/CD, analytics instrumentation, and monitoring.</li>
-              <li>Developed interactive browser-native systems combining WebGL rendering, WebAudio pipelines, and real-time UI logic.</li>
-              <li>Led projects from technical scoping through deployment, ensuring stability, performance, and clean handoff documentation.</li>
+              <li>Designed, built, and shipped production websites and web applications from initial scope through deployment.</li>
+              <li>Developed <span className="cv-key">React</span> dashboards and internal tools integrated with <span className="cv-key">Node APIs</span> and database workflows.</li>
+              <li>Implemented production infrastructure including domain management, hosting, <span className="cv-key">CI/CD pipelines</span>, analytics, and monitoring.</li>
+              <li>Built interactive browser systems using <span className="cv-key">WebGL</span> rendering pipelines and <span className="cv-key">WebAudio</span> integration.</li>
+              <li>Delivered production systems including developer tools, interactive browser applications, and client-facing platforms.</li>
+              <li>Maintained codebases and delivered technical handoff documentation for client teams.</li>
             </ul>
             <p className="lead-line">
-              Selected projects:{' '}
+              Selected work:{' '}
               <a href="https://ironsignalworks.com/#work-start" target="_blank" rel="noreferrer">
                 https://ironsignalworks.com/#work-start
               </a>
@@ -773,84 +782,28 @@ export default function App() {
             <p className="lead-line">2021 - 2024</p>
             <ul>
               <li>Improved dashboard load times by 35% through frontend optimization, caching strategy, and query restructuring.</li>
-              <li>Automated reporting workflows, increasing reliability of operational data delivery.</li>
-              <li>Enhanced fraud detection workflows, reducing manual review time and improving decision accuracy.</li>
+              <li>Automated reporting workflows to improve consistency of operational data delivery.</li>
+              <li>Improved fraud-detection workflows, reducing manual review workload and improving operational efficiency.</li>
               <li>Delivered production features in cross-functional collaboration with engineering and product teams.</li>
             </ul>
           </section>
 
           <section className="cv-page page-2 section">
             <h2>Technical Stack</h2>
-            <div className="tech-stack">
-              <div className="stack-group">
-                <p className="stack-label">Frontend &amp; Runtime</p>
-                <div className="pill-row">
-                  <span className="tech-pill">JavaScript</span>
-                  <span className="tech-pill">TypeScript</span>
-                  <span className="tech-pill">React</span>
-                  <span className="tech-pill">Node.js</span>
-                  <span className="tech-pill">Express</span>
-                  <span className="tech-pill">Vite</span>
-                  <span className="tech-pill">Tailwind</span>
-                  <span className="tech-pill">REST APIs</span>
-                </div>
-              </div>
-              <div className="stack-group">
-                <p className="stack-label">Graphics &amp; Interactive</p>
-                <div className="pill-row">
-                  <span className="tech-pill">Canvas</span>
-                  <span className="tech-pill">WebGL</span>
-                  <span className="tech-pill">Three.js</span>
-                  <span className="tech-pill">GLSL</span>
-                  <span className="tech-pill">procedural visuals</span>
-                </div>
-              </div>
-              <div className="stack-group">
-                <p className="stack-label">Audio &amp; Interaction</p>
-                <div className="pill-row">
-                  <span className="tech-pill">WebAudio API</span>
-                  <span className="tech-pill">p5.js</span>
-                  <span className="tech-pill">Max/MSP</span>
-                  <span className="tech-pill">DSP chains</span>
-                  <span className="tech-pill">UI sound systems</span>
-                </div>
-              </div>
-              <div className="stack-group">
-                <p className="stack-label">Data &amp; Infrastructure</p>
-                <div className="pill-row">
-                  <span className="tech-pill">MongoDB</span>
-                  <span className="tech-pill">Supabase</span>
-                  <span className="tech-pill">SQLite</span>
-                  <span className="tech-pill">SQL</span>
-                  <span className="tech-pill">Python (data workflows)</span>
-                  <span className="tech-pill">CI/CD</span>
-                  <span className="tech-pill">Render</span>
-                </div>
-              </div>
-              <div className="stack-group">
-                <p className="stack-label">Design &amp; Tooling</p>
-                <div className="pill-row">
-                  <span className="tech-pill">Figma</span>
-                  <span className="tech-pill">Adobe CC</span>
-                  <span className="tech-pill">UX engineering</span>
-                  <span className="tech-pill">rapid prototyping</span>
-                </div>
-              </div>
-            </div>
-
-            <h2>Interactive Systems &amp; Creative Engineering</h2>
-            <ul>
-              <li>Design and implementation of browser-native audio engines and visual systems.</li>
-              <li>Development of adaptive UI sound environments and sequencing tools.</li>
-              <li>Integration of audio/visual pipelines for interactive media and real-time workflows.</li>
+            <ul className="plain-list">
+              <li><strong>Frontend:</strong> <span className="cv-key">React</span>, <span className="cv-key">TypeScript</span>, <span className="cv-key">JavaScript</span>, <span className="cv-key">Vite</span>, Tailwind.</li>
+              <li><strong>Backend:</strong> <span className="cv-key">Node.js</span>, Express, <span className="cv-key">REST APIs</span>, authentication, data integration.</li>
+              <li><strong>Data:</strong> <span className="cv-key">SQL</span>, SQLite, MongoDB, Supabase.</li>
+              <li><strong>Interactive:</strong> <span className="cv-key">Canvas</span>, <span className="cv-key">WebGL</span>, Three.js, GLSL, <span className="cv-key">WebAudio API</span>.</li>
+              <li><strong>Infrastructure:</strong> <span className="cv-key">CI/CD</span>, Cloudflare, Render, Railway, monitoring/analytics.</li>
+              <li><strong>Dev Tools:</strong> <span className="cv-key">Git</span>, GitHub, IDE-centric development.</li>
+              <li><strong>Workflow:</strong> <span className="cv-key">Agile</span> delivery, <span className="cv-key">AI agents</span>, <span className="cv-key">prompt engineering</span>.</li>
+              <li><strong>Design:</strong> <span className="cv-key">Figma</span>, Adobe CC, UI implementation from design systems.</li>
             </ul>
 
             <h2>Education</h2>
-            <p>Faculdade de Letras da Universidade de Coimbra (FLUC)</p>
-            <p>Estudos Artisticos - Cinema</p>
-            <p>
-              Complemented by on-the-job training in Python, SQL, Git, Power BI.
-            </p>
+            <p>Faculdade de Letras da Universidade de Coimbra (FLUC) - Estudos Artisticos (Cinema)</p>
+            <p>Additional training: Python, SQL, Git, Power BI.</p>
             <h2>Languages</h2>
             <p>Portuguese - Native</p>
             <p>English - C2</p>
